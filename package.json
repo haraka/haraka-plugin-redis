@@ -1,0 +1,37 @@
+{
+  "name": "haraka-plugin-redis",
+  "version": "1.0.0",
+  "description": "Redis plugin for Haraka & other plugins",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "redis": "^2.6.5"
+  },
+  "devDependencies": {
+    "eslint": "^3.14.1",
+    "haraka-test-fixtures": "^1.0.13",
+    "nodeunit": "^0.10.2"
+  },
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint *.js test/*.js",
+    "test": "./run_tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haraka/haraka-plugin-redis.git"
+  },
+  "keywords": [
+    "haraka",
+    "mail",
+    "smtp",
+    "redis"
+  ],
+  "author": "Matt Simerson <matt@tnpi.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/haraka/haraka-plugin-redis/issues"
+  },
+  "homepage": "https://github.com/haraka/haraka-plugin-redis#readme"
+}
