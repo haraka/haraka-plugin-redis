@@ -11,8 +11,8 @@
   },
   "devDependencies": {
     "eslint": "^3.14.1",
-    "haraka-test-fixtures": "^1.0.13",
-    "nodeunit": "^0.10.2"
+    "haraka-test-fixtures": "*",
+    "nodeunit": "*"
   },
   "scripts": {
     "lint": "./node_modules/.bin/eslint *.js test/*.js",
