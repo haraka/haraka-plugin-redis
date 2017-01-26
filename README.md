@@ -1,5 +1,7 @@
 # haraka-plugin-redis
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/haraka/haraka-plugin-redis.svg)](https://greenkeeper.io/)
+
 Connects to a redis instance. By default it stores a `redis`
 connection handle at `server.notes.redis`. See below to get a custom DB handle
 attached to another database.
