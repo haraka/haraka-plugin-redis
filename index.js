@@ -120,7 +120,7 @@ exports.shutdown = function () {
     }
 }
 
-exports.redis_ping = function(done) {
+exports.redis_ping = function (done) {
     var plugin = this;
     var nope = function (err) {
         plugin.redis_pings=false;
