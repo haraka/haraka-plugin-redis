@@ -99,4 +99,4 @@ message.
 [apv-img]: https://ci.appveyor.com/api/projects/status/lme4otppxe22me0j/branch/master?svg=true
 [apv-url]: https://ci.appveyor.com/project/msimerson/haraka-plugin-redis/branch/master
 [gk-img]: https://badges.greenkeeper.io/haraka/haraka-plugin-redis.svg
-[gk-curl]: https://greenkeeper.io/
+[gk-url]: https://greenkeeper.io/
