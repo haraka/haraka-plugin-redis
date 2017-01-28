@@ -1,6 +1,9 @@
 # haraka-plugin-redis
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/haraka/haraka-plugin-redis.svg)](https://greenkeeper.io/)
+[![Build Status][ci-img]][ci-url]
+[![Code Climate][clim-img]][clim-url]
+[![Windows Build status][apv-img]][apv-url]
+[![Greenkeeper badge][gk-img]][gk-url]
 
 Connects to a redis instance. By default it stores a `redis`
 connection handle at `server.notes.redis`. See below to get a custom DB handle
@@ -82,3 +85,18 @@ When a db ID is specified in the [redis] section of a redis inheriting plugin, l
 
 Notice the database ID numbers appended to each plugins redis connection
 message.
+
+
+`[![Coverage Status][cov-img]][cov-url]` nyet
+
+
+[ci-img]: https://travis-ci.org/haraka/haraka-plugin-redis.svg
+[ci-url]: https://travis-ci.org/haraka/haraka-plugin-redis
+[cov-img]: https://codecov.io/github/haraka/haraka-plugin-redis/coverage.svg
+[cov-url]: https://codecov.io/github/haraka/haraka-plugin-redis?branch=master
+[clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-redis/badges/gpa.svg
+[clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis
+[apv-img]: https://ci.appveyor.com/api/projects/status/lme4otppxe22me0j/branch/master?svg=true
+[apv-url]: https://ci.appveyor.com/project/msimerson/haraka-plugin-redis/branch/master
+[gk-img]: https://badges.greenkeeper.io/haraka/haraka-plugin-redis.svg
+[gk-curl]: https://greenkeeper.io/
