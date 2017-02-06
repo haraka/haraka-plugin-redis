@@ -80,6 +80,7 @@ optionally with a redis db ID.
 When a db ID is specified in the [redis] section of a redis inheriting plugin, log messages like these will be emitted when Haraka starts:
 
     [INFO] [-] [redis] connected to redis://172.16.15.16:6379 v3.2.6
+    [INFO] [-] [limit] connected to redis://172.16.15.16:6379/1 v3.2.6
     [INFO] [-] [karma] connected to redis://172.16.15.16:6379/2 v3.2.6
     [INFO] [-] [known-senders] connected to redis://172.16.15.16:6379/3 v3.2.6
 

@@ -8,7 +8,7 @@ exports.register = function () {
 
     plugin.load_redis_ini();
 
-    // some other plugin doing: inherits('redis')
+    // some other plugin doing: inherits('haraka-plugin-redis')
     if (plugin.name !== 'redis') return;
 
     // do register these when 'redis' is declared in config/plugins
@@ -100,8 +100,8 @@ exports.init_redis_plugin = function (next, server) {
     }
 
     // use server-wide redis connection when using default DB id
-    if (!plugin.cfg.redis.db) {
-        if (server.notes.redis) {
+    if (!plugin.cfg.redis || !plugin.cfg.redis.db) {
+        if (server && server.notes && server.notes.redis) {
             server.loginfo(plugin, 'using server.notes.redis');
             plugin.db = server.notes.redis;
             return nextOnce();
@@ -115,7 +115,7 @@ exports.shutdown = function () {
     if (this.db) {
         this.db.quit();
     }
-    if (server && server.notes.redis) {
+    if (server && server.notes && server.notes.redis) {
         server.notes.redis.quit();
     }
 }
