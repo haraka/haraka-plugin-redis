@@ -99,9 +99,13 @@ exports.init_redis_plugin = function (next, server) {
         next();
     }
 
+    // tests that do not load config
+    if (!plugin.cfg) plugin.cfg = { redis: {} };
+    if (!server) server = { notes: {} };
+
     // use server-wide redis connection when using default DB id
-    if (!plugin.cfg.redis || !plugin.cfg.redis.db) {
-        if (server && server.notes && server.notes.redis) {
+    if (!plugin.cfg.redis.db) {
+        if (server.notes.redis) {
             server.loginfo(plugin, 'using server.notes.redis');
             plugin.db = server.notes.redis;
             return nextOnce();
