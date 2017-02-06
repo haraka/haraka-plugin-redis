@@ -97,7 +97,7 @@ message.
 [cov-url]: https://codecov.io/github/haraka/haraka-plugin-redis?branch=master
 [clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-redis/badges/gpa.svg
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis
-[apv-img]: https://ci.appveyor.com/api/projects/status/lme4otppxe22me0j/branch/master?svg=true
-[apv-url]: https://ci.appveyor.com/project/msimerson/haraka-plugin-redis/branch/master
+[apv-img]: https://ci.appveyor.com/api/projects/status/fxk78f25n61nq3lx?svg=true
+[apv-url]: https://ci.appveyor.com/project/msimerson/haraka-plugin-redis
 [gk-img]: https://badges.greenkeeper.io/haraka/haraka-plugin-redis.svg
 [gk-url]: https://greenkeeper.io/
