@@ -216,6 +216,7 @@ exports.redis_subscribe = function (connection, next) {
     })
     .on('punsubscribe', function (pattern, count) {
         connection.logdebug(plugin, 'unsubsubscribed from ' + pattern);
+        connection.notes.redis.quit();
     });
     connection.notes.redis.psubscribe(plugin.get_redis_sub_channel(connection));
 };
