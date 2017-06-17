@@ -1,4 +1,8 @@
 
+# 1.0.6 - 2017-06-16
+
+- eslint 4 compat
+
 # 1.0.5 - 2017-06-09
 
 - disconnect per-connection redis client upon punsubscribe

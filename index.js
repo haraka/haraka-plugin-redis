@@ -188,13 +188,13 @@ exports.redis_subscribe_pattern = function (pattern, next) {
         host: plugin.redisCfg.pubsub.host,
         port: plugin.redisCfg.pubsub.port,
     })
-    .on('psubscribe', function (pattern2, count) {
-        plugin.logdebug(plugin, 'psubscribed to ' + pattern2);
-        next();
-    })
-    .on('punsubscribe', function (pattern3, count) {
-        plugin.logdebug(plugin, 'unsubsubscribed from ' + pattern3);
-    });
+        .on('psubscribe', function (pattern2, count) {
+            plugin.logdebug(plugin, 'psubscribed to ' + pattern2);
+            next();
+        })
+        .on('punsubscribe', function (pattern3, count) {
+            plugin.logdebug(plugin, 'unsubsubscribed from ' + pattern3);
+        });
     plugin.redis.psubscribe(pattern);
 };
 
@@ -210,14 +210,14 @@ exports.redis_subscribe = function (connection, next) {
         host: plugin.redisCfg.pubsub.host,
         port: plugin.redisCfg.pubsub.port,
     })
-    .on('psubscribe', function (pattern, count) {
-        connection.logdebug(plugin, 'psubscribed to ' + pattern);
-        next();
-    })
-    .on('punsubscribe', function (pattern, count) {
-        connection.logdebug(plugin, 'unsubsubscribed from ' + pattern);
-        connection.notes.redis.quit();
-    });
+        .on('psubscribe', function (pattern, count) {
+            connection.logdebug(plugin, 'psubscribed to ' + pattern);
+            next();
+        })
+        .on('punsubscribe', function (pattern, count) {
+            connection.logdebug(plugin, 'unsubsubscribed from ' + pattern);
+            connection.notes.redis.quit();
+        });
     connection.notes.redis.psubscribe(plugin.get_redis_sub_channel(connection));
 };
 
