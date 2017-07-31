@@ -36,7 +36,10 @@ exports.load_redis_ini = function () {
     if (!ps.host) ps.host = s.host;
     if (!ps.port) ps.port = s.port;
 
-    if (!plugin.redisCfg.opts) plugin.redisCfg.opts = {};
+    if (plugin.redisCfg.opts === undefined) plugin.redisCfg.opts = {};
+    Object.keys(plugin.redisCfg.opts).forEach(opt => {
+        if (ps[opt] === undefined) ps[opt] = plugin.redisCfg.opts[opt];
+    });
 };
 
 exports.merge_redis_ini = function () {
@@ -79,7 +82,7 @@ exports.init_redis_shared = function (next, server) {
         });
     }
     else {
-        var opts = plugin.redisCfg.opts;
+        let opts = JSON.parse(JSON.stringify(plugin.redisCfg.opts));
         opts.host = plugin.redisCfg.server.host;
         opts.port = plugin.redisCfg.server.port;
         server.notes.redis = plugin.get_redis_client(opts, nextOnce);
@@ -184,10 +187,7 @@ exports.redis_subscribe_pattern = function (pattern, next) {
         return next();
     }
 
-    plugin.redis = require('redis').createClient({
-        host: plugin.redisCfg.pubsub.host,
-        port: plugin.redisCfg.pubsub.port,
-    })
+    plugin.redis = require('redis').createClient(plugin.redisCfg.pubsub)
         .on('psubscribe', function (pattern2, count) {
             plugin.logdebug(plugin, 'psubscribed to ' + pattern2);
             next();
@@ -206,10 +206,7 @@ exports.redis_subscribe = function (connection, next) {
         return next();
     }
 
-    connection.notes.redis = require('redis').createClient({
-        host: plugin.redisCfg.pubsub.host,
-        port: plugin.redisCfg.pubsub.port,
-    })
+    connection.notes.redis = require('redis').createClient(plugin.redisCfg.pubsub)
         .on('psubscribe', function (pattern, count) {
             connection.logdebug(plugin, 'psubscribed to ' + pattern);
             next();

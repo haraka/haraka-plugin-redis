@@ -1,4 +1,8 @@
 
+# 1.0.7 - 2017-07-31
+
+- apply config [opts] to pubsub settings #7
+
 # 1.0.6 - 2017-06-16
 
 - eslint 4 compat
