@@ -187,6 +187,7 @@ exports.redis_subscribe_pattern = function (pattern, next) {
     plugin.redis = require('redis').createClient({
         host: plugin.redisCfg.pubsub.host,
         port: plugin.redisCfg.pubsub.port,
+        password: plugin.redisCfg.pubsub.password,
     })
         .on('psubscribe', function (pattern2, count) {
             plugin.logdebug(plugin, 'psubscribed to ' + pattern2);
@@ -209,6 +210,7 @@ exports.redis_subscribe = function (connection, next) {
     connection.notes.redis = require('redis').createClient({
         host: plugin.redisCfg.pubsub.host,
         port: plugin.redisCfg.pubsub.port,
+        password: plugin.redisCfg.pubsub.password,
     })
         .on('psubscribe', function (pattern, count) {
             connection.logdebug(plugin, 'psubscribed to ' + pattern);
