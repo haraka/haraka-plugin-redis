@@ -1,10 +1,10 @@
 'use strict';
 /* global server */
 
-var redis  = require('redis');
+const redis  = require('redis');
 
 exports.register = function () {
-    var plugin = this;
+    const plugin = this;
 
     plugin.load_redis_ini();
 
@@ -17,14 +17,14 @@ exports.register = function () {
 };
 
 exports.load_redis_ini = function () {
-    var plugin = this;
+    const plugin = this;
 
     plugin.redisCfg = plugin.config.get('redis.ini', function () {
         plugin.load_redis_ini();
     });
 
     if (!plugin.redisCfg.server) plugin.redisCfg.server = {};
-    var s = plugin.redisCfg.server;
+    const s = plugin.redisCfg.server;
     if (s.ip && !s.host) s.host = s.ip;
     if (!s.host) s.host = '127.0.0.1';
     if (!s.port) s.port = '6379';
@@ -32,7 +32,7 @@ exports.load_redis_ini = function () {
     if (!plugin.redisCfg.pubsub) {
         plugin.redisCfg.pubsub = JSON.parse(JSON.stringify(s));
     }
-    var ps = plugin.redisCfg.pubsub;
+    const ps = plugin.redisCfg.pubsub;
     if (!ps.host) ps.host = s.host;
     if (!ps.port) ps.port = s.port;
 
@@ -43,7 +43,7 @@ exports.load_redis_ini = function () {
 };
 
 exports.merge_redis_ini = function () {
-    var plugin = this;
+    const plugin = this;
 
     if (!plugin.cfg) plugin.cfg = {};   // no <plugin>.ini loaded?
 
@@ -60,9 +60,9 @@ exports.merge_redis_ini = function () {
 }
 
 exports.init_redis_shared = function (next, server) {
-    var plugin = this;
+    const plugin = this;
 
-    var calledNext = false;
+    let calledNext = false;
     function nextOnce () {
         if (calledNext) return;
         calledNext = true;
@@ -82,7 +82,7 @@ exports.init_redis_shared = function (next, server) {
         });
     }
     else {
-        let opts = JSON.parse(JSON.stringify(plugin.redisCfg.opts));
+        const opts = JSON.parse(JSON.stringify(plugin.redisCfg.opts));
         opts.host = plugin.redisCfg.server.host;
         opts.port = plugin.redisCfg.server.port;
         server.notes.redis = plugin.get_redis_client(opts, nextOnce);
@@ -90,12 +90,12 @@ exports.init_redis_shared = function (next, server) {
 };
 
 exports.init_redis_plugin = function (next, server) {
-    var plugin = this;
+    const plugin = this;
 
     // this function is called by plugins at init_*, to establish their
     // shared or unique redis db handle.
 
-    var calledNext=false;
+    let calledNext=false;
     function nextOnce () {
         if (calledNext) return;
         calledNext = true;
@@ -128,8 +128,8 @@ exports.shutdown = function () {
 }
 
 exports.redis_ping = function (done) {
-    var plugin = this;
-    var nope = function (err) {
+    const plugin = this;
+    const nope = function (err) {
         plugin.redis_pings=false;
         done(err);
     };
@@ -147,15 +147,15 @@ exports.redis_ping = function (done) {
 };
 
 exports.get_redis_client = function (opts, next) {
-    var plugin = this;
+    const plugin = this;
 
-    var client = redis.createClient(opts)
+    const client = redis.createClient(opts)
         .on('error', function (error) {
             plugin.logerror('Redis error: ' + error.message);
             next();
         })
         .on('ready', function () {
-            var msg = 'connected to redis://' + opts.host + ':' + opts.port;
+            let msg = 'connected to redis://' + opts.host + ':' + opts.port;
             if (opts.db) msg += '/' + opts.db;
             if (client.server_info && client.server_info.redis_version) {
                 msg += ' v' + client.server_info.redis_version;
@@ -181,7 +181,7 @@ exports.get_redis_sub_channel = function (conn) {
 };
 
 exports.redis_subscribe_pattern = function (pattern, next) {
-    var plugin = this;
+    const plugin = this;
     if (plugin.redis) {
         // already subscribed?
         return next();
@@ -199,7 +199,7 @@ exports.redis_subscribe_pattern = function (pattern, next) {
 };
 
 exports.redis_subscribe = function (connection, next) {
-    var plugin = this;
+    const plugin = this;
 
     if (connection.notes.redis) {
         // another plugin has already called this. Do nothing

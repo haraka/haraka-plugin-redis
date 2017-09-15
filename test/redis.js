@@ -1,21 +1,21 @@
 'use strict';
 
-var fixtures     = require('haraka-test-fixtures');
+const fixtures     = require('haraka-test-fixtures');
 
-var _set_up_redis = function (done) {
+function _set_up_redis (done) {
 
     this.plugin = new fixtures.plugin('index');
     this.plugin.register();
 
     done();
-};
+}
 
-var retry = function (options) {
+function retry (options) {
     if (options.error) {
         console.error(options.error);
     }
     return undefined;
-};
+}
 
 exports.redis = {
     setUp : _set_up_redis,
@@ -32,7 +32,7 @@ exports.redis = {
     },
     'connects' : function (test) {
         test.expect(1);
-        var redis = this.plugin.get_redis_client({
+        const redis = this.plugin.get_redis_client({
             host: this.plugin.redisCfg.server.host,
             port: this.plugin.redisCfg.server.port,
             retry_strategy: retry,
@@ -54,7 +54,7 @@ exports.redis = {
         this.plugin.merge_redis_ini();
         this.plugin.cfg.redis.db = 2;
         this.plugin.cfg.redis.retry_strategy = retry;
-        var client = this.plugin.get_redis_client(this.plugin.cfg.redis, function () {
+        const client = this.plugin.get_redis_client(this.plugin.cfg.redis, function () {
             test.expect(2);
             // console.log(client);
             test.equal(client.connected, true);
