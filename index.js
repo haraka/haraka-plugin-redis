@@ -221,4 +221,5 @@ exports.redis_subscribe = function (connection, next) {
 exports.redis_unsubscribe = function (connection) {
     if (!connection.notes.redis) return;
     connection.notes.redis.punsubscribe(this.get_redis_sub_channel(connection));
+    connection.notes.redis.quit();
 };
