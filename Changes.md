@@ -1,4 +1,8 @@
 
+# 1.0.8 - 2017-12-30
+
+- upon punsubscribe, `quit()` (disconnect) redis client
+
 # 1.0.7 - 2017-07-31
 
 - apply config [opts] to pubsub settings #7

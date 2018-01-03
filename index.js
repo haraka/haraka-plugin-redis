@@ -53,8 +53,8 @@ exports.merge_redis_ini = function () {
 
     if (!plugin.redisCfg) plugin.load_redis_ini();
 
-    ['host', 'port', 'db'].forEach(function (k) {
-        if (plugin.cfg.redis[k]) return;  // property already set
+    ['host', 'port', 'db'].forEach((k) => {
+        if (plugin.cfg.redis[k] !== undefined) return;  // already set
         plugin.cfg.redis[k] = plugin.redisCfg.server[k];
     });
 }
@@ -63,7 +63,8 @@ exports.init_redis_shared = function (next, server) {
     const plugin = this;
 
     let calledNext = false;
-    function nextOnce () {
+    function nextOnce (e) {
+        if (e) plugin.logerror('Redis error: ' + e.message);
         if (calledNext) return;
         calledNext = true;
         next();
@@ -72,11 +73,9 @@ exports.init_redis_shared = function (next, server) {
     // this is the server-wide redis, shared by plugins that don't
     // specificy a db ID.
     if (server.notes.redis) {
-        server.notes.redis.ping(function (err, res) {
-            if (err) {
-                plugin.logerror(err);
-                return nextOnce(err);
-            }
+        server.notes.redis.ping((err, res) => {
+            if (err) return nextOnce(err);
+
             plugin.loginfo('already connected');
             nextOnce(); // connection is good
         });
@@ -119,9 +118,8 @@ exports.init_redis_plugin = function (next, server) {
 };
 
 exports.shutdown = function () {
-    if (this.db) {
-        this.db.quit();
-    }
+    if (this.db) this.db.quit();
+
     if (server && server.notes && server.notes.redis) {
         server.notes.redis.quit();
     }
@@ -139,8 +137,8 @@ exports.redis_ping = function (done) {
     }
 
     plugin.db.ping(function (err, res) {
-        if (err           ) { return nope(err); }
-        if (res !== 'PONG') { return nope(new Error('not PONG')); }
+        if (err) return nope(err);
+        if (res !== 'PONG') return nope(new Error('not PONG'));
         plugin.redis_pings=true;
         done(err, true);
     });
@@ -150,11 +148,10 @@ exports.get_redis_client = function (opts, next) {
     const plugin = this;
 
     const client = redis.createClient(opts)
-        .on('error', function (error) {
-            plugin.logerror('Redis error: ' + error.message);
-            next();
+        .on('error', (error) => {
+            next(error);
         })
-        .on('ready', function () {
+        .on('ready', () => {
             let msg = 'connected to redis://' + opts.host + ':' + opts.port;
             if (opts.db) msg += '/' + opts.db;
             if (client.server_info && client.server_info.redis_version) {
@@ -163,9 +160,9 @@ exports.get_redis_client = function (opts, next) {
             plugin.loginfo(plugin, msg);
             next();
         })
-        .on('end', function () {
+        .on('end', () => {
             if (arguments.length) console.log(arguments);
-            // plugin.logerror('Redis error: ' + error.message);
+            // plugin.logdebug('Redis client ended');
             next();
         });
 
@@ -182,10 +179,8 @@ exports.get_redis_sub_channel = function (conn) {
 
 exports.redis_subscribe_pattern = function (pattern, next) {
     const plugin = this;
-    if (plugin.redis) {
-        // already subscribed?
-        return next();
-    }
+
+    if (plugin.redis) return next(); // already subscribed?
 
     plugin.redis = require('redis').createClient(plugin.redisCfg.pubsub)
         .on('psubscribe', function (pattern2, count) {
@@ -194,7 +189,9 @@ exports.redis_subscribe_pattern = function (pattern, next) {
         })
         .on('punsubscribe', function (pattern3, count) {
             plugin.logdebug(plugin, 'unsubsubscribed from ' + pattern3);
+            connection.notes.redis.quit();
         });
+
     plugin.redis.psubscribe(pattern);
 };
 
@@ -215,6 +212,7 @@ exports.redis_subscribe = function (connection, next) {
             connection.logdebug(plugin, 'unsubsubscribed from ' + pattern);
             connection.notes.redis.quit();
         });
+
     connection.notes.redis.psubscribe(plugin.get_redis_sub_channel(connection));
 };
 
