@@ -194,6 +194,9 @@ exports.redis_subscribe_pattern = function (pattern, next) {
     if (plugin.redis) return next(); // already subscribed?
 
     plugin.redis = require('redis').createClient(plugin.redisCfg.pubsub)
+        .on('error', function (err) {
+            next(err.message);
+        })
         .on('psubscribe', function (pattern2, count) {
             plugin.logdebug(plugin, `psubscribed to ${pattern2}`);
             next();
@@ -201,8 +204,9 @@ exports.redis_subscribe_pattern = function (pattern, next) {
         .on('punsubscribe', function (pattern3, count) {
             plugin.logdebug(plugin, `unsubsubscribed from ${pattern3}`);
             connection.notes.redis.quit();
-        })
-        .psubscribe(pattern);
+        });
+
+    plugin.redis.psubscribe(pattern);
 }
 
 exports.redis_subscribe = function (connection, next) {
@@ -239,8 +243,9 @@ exports.redis_subscribe = function (connection, next) {
         .on('punsubscribe', function (pattern, count) {
             connection.logdebug(plugin, `unsubsubscribed from ${pattern}`);
             connection.notes.redis.quit();
-        })
-        .psubscribe(plugin.get_redis_sub_channel(connection));
+        });
+
+    connection.notes.redis.psubscribe(plugin.get_redis_sub_channel(connection));
 }
 
 exports.redis_unsubscribe = function (connection) {
