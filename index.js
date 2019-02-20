@@ -148,7 +148,7 @@ exports.redis_ping = function (done) {
 
 function getUriStr (client, opts) {
     let msg = `redis://${opts.host}:${opts.port}`;
-    if (opts.db) msg += '/' + opts.db;
+    if (opts.db) msg += `/${opts.db}`;
     if (client && client.server_info && client.server_info.redis_version) {
         msg += ` v${client.server_info.redis_version}`;
     }
