@@ -1,5 +1,12 @@
 
-# 1.0.8 - 2017-12-30
+# 1.0.9 - 2019-02-19
+
+- bump redis version to 2.8.0
+- emit error message if redis connection fails
+- add 3s timeout for subscribe connects: minimize connections stalls
+- add es6 template literals
+
+# 1.0.8 - 2018-01-03
 
 - upon punsubscribe, `quit()` (disconnect) redis client
 
