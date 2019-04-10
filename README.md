@@ -17,7 +17,6 @@ The `redis.ini` file has the following sections (defaults shown):
 
     ; host=127.0.0.1
     ; port=6379
-    ; db=0
 
 ### [pubsub]
 
@@ -28,7 +27,9 @@ Publish & Subscribe are DB agnostic and thus have no db setting. If host and por
 
 ### [opts]
 
-    ; see https://www.npmjs.com/package/redis#overloading
+    ; see https://www.npmjs.com/package/redis#options-object-properties
+    ; db=0
+    ; password=battery-horse-staple
 
 
 ## Usage (shared redis)

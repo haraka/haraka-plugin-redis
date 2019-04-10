@@ -1,4 +1,10 @@
 
+# 1.0.10 - 2019-04-09
+
+- merge ALL of [opts] into [server] config (fixes #18)
+- merge all of [opts] into [pubsub] config
+
+
 # 1.0.9 - 2019-02-19
 
 - bump redis version to 2.8.0
