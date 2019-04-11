@@ -87,7 +87,8 @@ exports.init_redis_plugin = function (next, server) {
     if (!plugin.cfg) plugin.cfg = { redis: {} };
     if (!server) server = { notes: {} };
 
-    if (plugin.cfg.redis.db !== undefined) {
+    const pidb = plugin.cfg.redis.db;
+    if (pidb !== undefined && pidb !== plugin.redisCfg.db) {
         plugin.db = plugin.get_redis_client(plugin.cfg.redis, nextOnce);
         return;
     }
@@ -141,9 +142,6 @@ function getUriStr (client, opts) {
 exports.get_redis_client = function (opts, next) {
     const plugin = this;
 
-    if (!opts.host) opts.host = 'localhost'
-    if (!opts.port) opts.port = '6379'
-
     const client = redis.createClient(opts);
     const urlStr = getUriStr(client, opts);
 
@@ -153,7 +151,7 @@ exports.get_redis_client = function (opts, next) {
             next(err);
         })
         .on('ready', () => {
-            plugin.loginfo(plugin, `connected to ${urlStr}`);
+            plugin.loginfo(`connected to ${urlStr}`);
             next();
         })
         .on('end', () => {
