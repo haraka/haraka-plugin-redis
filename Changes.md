@@ -3,6 +3,8 @@
 
 - merge ALL of [opts] into [server] config (fixes #18)
 - merge all of [opts] into [pubsub] config
+- include an empty config/redis.ini
+- add defaultOpts once, vs defaults in two places
 
 
 ### 1.0.9 - 2019-02-19

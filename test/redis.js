@@ -54,6 +54,22 @@ exports.redis = {
         });
         test.done();
     },
+    'merges redis.ini [opts] into plugin config': function (test) {
+        this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
+        this.plugin.load_redis_ini();
+        this.plugin.cfg = {};
+        this.plugin.merge_redis_ini();
+        test.expect(1);
+        test.deepEqual(this.plugin.cfg, {
+            redis: {
+                host: '127.0.0.1',
+                port: '6379',
+                db: 5,
+                password: 'dontUseThisOne'
+            }
+        });
+        test.done();
+    },
     'connects' : function (test) {
         test.expect(1);
         const redis = this.plugin.get_redis_client({
