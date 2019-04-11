@@ -16,47 +16,32 @@ exports.register = function () {
     plugin.register_hook('init_child',   'init_redis_shared');
 }
 
+const defaultOpts = { host: '127.0.0.1', port: '6379' };
+
 exports.load_redis_ini = function () {
     const plugin = this;
 
+    // store redis cfg at redisCfg, to avoid conflicting with plugins that
+    // inherit this plugin and have *their* config at plugin.cfg
     plugin.redisCfg = plugin.config.get('redis.ini', function () {
         plugin.load_redis_ini();
     });
 
-    if (!plugin.redisCfg.server) plugin.redisCfg.server = {};
-    const s = plugin.redisCfg.server;
-    if (s.ip && !s.host) s.host = s.ip;
-    if (!s.host) s.host = '127.0.0.1';
-    if (!s.port) s.port = '6379';
+    const rc = plugin.redisCfg;
+    plugin.redisCfg.server = Object.assign({}, defaultOpts, rc.opts, rc.server);
+    if (rc.server.ip && !rc.server.host) rc.server.host = rc.server.ip;  // backwards compat
 
-    if (!plugin.redisCfg.pubsub) {
-        plugin.redisCfg.pubsub = JSON.parse(JSON.stringify(s));
-    }
-    const ps = plugin.redisCfg.pubsub;
-    if (!ps.host) ps.host = s.host;
-    if (!ps.port) ps.port = s.port;
-
-    if (plugin.redisCfg.opts === undefined) plugin.redisCfg.opts = {};
-    Object.keys(plugin.redisCfg.opts).forEach(opt => {
-        if (ps[opt] === undefined) ps[opt] = plugin.redisCfg.opts[opt];
-    });
+    plugin.redisCfg.pubsub = Object.assign({}, defaultOpts, rc.opts, rc.server, rc.pubsub);
 }
 
 exports.merge_redis_ini = function () {
     const plugin = this;
 
-    if (!plugin.cfg) plugin.cfg = {};   // no <plugin>.ini loaded?
+    if (!plugin.cfg)       plugin.cfg = {};   // no <plugin>.ini loaded?
+    if (!plugin.cfg.redis) plugin.cfg.redis = {}; // no [redis] in <plugin>.ini file
+    if (!plugin.redisCfg)  plugin.load_redis_ini();
 
-    if (!plugin.cfg.redis) {            // no [redis] in <plugin>.ini file
-        plugin.cfg.redis = {};
-    }
-
-    if (!plugin.redisCfg) plugin.load_redis_ini();
-
-    ['host', 'port', 'db'].forEach((k) => {
-        if (plugin.cfg.redis[k] !== undefined) return;  // already set
-        plugin.cfg.redis[k] = plugin.redisCfg.server[k];
-    });
+    plugin.cfg.redis = Object.assign({}, plugin.redisCfg.server, plugin.cfg.redis);
 }
 
 exports.init_redis_shared = function (next, server) {
@@ -72,20 +57,17 @@ exports.init_redis_shared = function (next, server) {
 
     // this is the server-wide redis, shared by plugins that don't
     // specificy a db ID.
-    if (server.notes.redis) {
-        server.notes.redis.ping((err, res) => {
-            if (err) return nextOnce(err);
+    if (!server.notes.redis) {
+        server.notes.redis = plugin.get_redis_client(plugin.redisCfg.server, nextOnce);
+        return
+    }
 
-            plugin.loginfo('already connected');
-            nextOnce(); // connection is good
-        });
-    }
-    else {
-        const opts = JSON.parse(JSON.stringify(plugin.redisCfg.opts));
-        opts.host = plugin.redisCfg.server.host;
-        opts.port = plugin.redisCfg.server.port;
-        server.notes.redis = plugin.get_redis_client(opts, nextOnce);
-    }
+    server.notes.redis.ping((err, res) => {
+        if (err) return nextOnce(err);
+
+        plugin.loginfo('already connected');
+        nextOnce(); // connection is good
+    });
 }
 
 exports.init_redis_plugin = function (next, server) {
@@ -105,16 +87,18 @@ exports.init_redis_plugin = function (next, server) {
     if (!plugin.cfg) plugin.cfg = { redis: {} };
     if (!server) server = { notes: {} };
 
-    // use server-wide redis connection when using default DB id
-    if (!plugin.cfg.redis.db) {
-        if (server.notes.redis) {
-            server.loginfo(plugin, 'using server.notes.redis');
-            plugin.db = server.notes.redis;
-            return nextOnce();
-        }
+    const pidb = plugin.cfg.redis.db;
+    if (pidb !== undefined && pidb !== plugin.redisCfg.db) {
+        plugin.db = plugin.get_redis_client(plugin.cfg.redis, nextOnce);
+        return;
     }
 
-    plugin.db = plugin.get_redis_client(plugin.cfg.redis, nextOnce);
+    // use server-wide redis connection when DB not specified
+    if (server.notes.redis) {
+        server.loginfo(plugin, 'using server.notes.redis');
+        plugin.db = server.notes.redis;
+        nextOnce();
+    }
 }
 
 exports.shutdown = function () {
@@ -150,16 +134,13 @@ function getUriStr (client, opts) {
     let msg = `redis://${opts.host}:${opts.port}`;
     if (opts.db) msg += `/${opts.db}`;
     if (client && client.server_info && client.server_info.redis_version) {
-        msg += ` v${client.server_info.redis_version}`;
+        msg += `\tv${client.server_info.redis_version}`;
     }
     return msg;
 }
 
 exports.get_redis_client = function (opts, next) {
     const plugin = this;
-
-    if (!opts.host) opts.host = 'localhost'
-    if (!opts.port) opts.port = '6379'
 
     const client = redis.createClient(opts);
     const urlStr = getUriStr(client, opts);
@@ -170,7 +151,7 @@ exports.get_redis_client = function (opts, next) {
             next(err);
         })
         .on('ready', () => {
-            plugin.loginfo(plugin, `connected to ${urlStr}`);
+            plugin.loginfo(`connected to ${urlStr}`);
             next();
         })
         .on('end', () => {

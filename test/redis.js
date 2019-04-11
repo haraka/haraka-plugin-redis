@@ -1,6 +1,8 @@
 'use strict';
 
-const fixtures     = require('haraka-test-fixtures');
+const path = require('path');
+
+const fixtures = require('haraka-test-fixtures');
 
 function _set_up_redis (done) {
 
@@ -30,6 +32,44 @@ exports.redis = {
         test.equal(this.plugin.redisCfg.server.port, 6379);
         test.done();
     },
+    'merges [opts] into server config': function (test) {
+        this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
+        this.plugin.load_redis_ini();
+        test.expect(1);
+        test.deepEqual(this.plugin.redisCfg, {
+            main: {},
+            pubsub: {
+                host: '127.0.0.1',
+                port: '6379',
+                db: 5,
+                password: 'dontUseThisOne'
+            },
+            opts: { db: 5, password: 'dontUseThisOne' },
+            server: {
+                host: '127.0.0.1',
+                port: '6379',
+                db: 5,
+                password: 'dontUseThisOne'
+            }
+        });
+        test.done();
+    },
+    'merges redis.ini [opts] into plugin config': function (test) {
+        this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
+        this.plugin.load_redis_ini();
+        this.plugin.cfg = {};
+        this.plugin.merge_redis_ini();
+        test.expect(1);
+        test.deepEqual(this.plugin.cfg, {
+            redis: {
+                host: '127.0.0.1',
+                port: '6379',
+                db: 5,
+                password: 'dontUseThisOne'
+            }
+        });
+        test.done();
+    },
     'connects' : function (test) {
         test.expect(1);
         const redis = this.plugin.get_redis_client({
@@ -46,7 +86,7 @@ exports.redis = {
         test.expect(2);
         test.equal(this.plugin.cfg, undefined);
         this.plugin.merge_redis_ini();
-        test.deepEqual(this.plugin.cfg.redis, { host: '127.0.0.1', port: '6379', db: undefined });
+        test.deepEqual(this.plugin.cfg.redis, { host: '127.0.0.1', port: '6379' });
         test.done();
     },
     'connects to a different redis db' : function (test) {

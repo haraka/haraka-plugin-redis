@@ -17,7 +17,6 @@ The `redis.ini` file has the following sections (defaults shown):
 
     ; host=127.0.0.1
     ; port=6379
-    ; db=0
 
 ### [pubsub]
 
@@ -28,8 +27,11 @@ Publish & Subscribe are DB agnostic and thus have no db setting. If host and por
 
 ### [opts]
 
-    ; see https://www.npmjs.com/package/redis#overloading
+    ; see https://www.npmjs.com/package/redis#options-object-properties
+    ; db=0
+    ; password=battery-horse-staple
 
+Options specified in `redis.ini[opts]` are applied to the server config, the pubsub config, AND the configurations of any plugins that inherit this plugin. This is ideal if the redis server requires a password. Specify it once in [opts]. If other redis connections need a different value (such as a unique DB), they must specify it. For plugins, all options are stored in the plugins `[redis]` section of its config file.
 
 ## Usage (shared redis)
 
@@ -61,10 +63,10 @@ In your plugin:
 ## Custom Usage
 
 This variation lets your plugin establish its own Redis connection,
-optionally with a redis db ID.
+optionally with a redis db ID. All redis config options must be listed in your plugins config file in the [redis] section.
 
     exports.register = function () {
-        var plugin = this;
+        const plugin = this;
         plugin.inherits('redis');
 
         plugin.cfg = plugin.config.get('my-plugin.ini');
@@ -88,13 +90,9 @@ Notice the database ID numbers appended to each plugins redis connection
 message.
 
 
-`[![Coverage Status][cov-img]][cov-url]` nyet
-
 
 [ci-img]: https://travis-ci.org/haraka/haraka-plugin-redis.svg
 [ci-url]: https://travis-ci.org/haraka/haraka-plugin-redis
-[cov-img]: https://codecov.io/github/haraka/haraka-plugin-redis/coverage.svg
-[cov-url]: https://codecov.io/github/haraka/haraka-plugin-redis?branch=master
 [clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-redis/badges/gpa.svg
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis
 [apv-img]: https://ci.appveyor.com/api/projects/status/fxk78f25n61nq3lx?svg=true
