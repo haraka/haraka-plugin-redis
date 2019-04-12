@@ -19,7 +19,7 @@ function retry (options) {
     return undefined;
 }
 
-exports.redis = {
+exports.config = {
     setUp : _set_up_redis,
     'loads' : function (test) {
         test.expect(1);
@@ -68,6 +68,15 @@ exports.redis = {
                 password: 'dontUseThisOne'
             }
         });
+        test.done();
+    },
+}
+
+exports.connects = {
+    setUp : _set_up_redis,
+    'loads' : function (test) {
+        test.expect(1);
+        test.equal(this.plugin.name, 'index');
         test.done();
     },
     'connects' : function (test) {

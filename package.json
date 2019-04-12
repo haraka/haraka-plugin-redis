@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-redis",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Redis plugin for Haraka & other plugins to inherit from",
   "main": "index.js",
   "directories": {
