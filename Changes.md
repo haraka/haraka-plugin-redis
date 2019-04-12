@@ -1,4 +1,8 @@
 
+### 1.0.11 - 2019-04-11
+
+- create custom connection only after: all 3 conditions match
+
 ### 1.0.10 - 2019-04-09
 
 - merge ALL of [opts] into [server] config (fixes #18)

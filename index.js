@@ -88,17 +88,17 @@ exports.init_redis_plugin = function (next, server) {
     if (!server) server = { notes: {} };
 
     const pidb = plugin.cfg.redis.db;
-    if (pidb !== undefined && pidb !== plugin.redisCfg.db) {
-        plugin.db = plugin.get_redis_client(plugin.cfg.redis, nextOnce);
-        return;
+    if (server.notes.redis) {    // server-wide redis is available
+        // and the DB not specified or is the same as server-wide
+        if (pidb === undefined || pidb === plugin.redisCfg.db) {
+            server.loginfo(plugin, 'using server.notes.redis');
+            plugin.db = server.notes.redis;
+            nextOnce();
+            return;
+        }
     }
 
-    // use server-wide redis connection when DB not specified
-    if (server.notes.redis) {
-        server.loginfo(plugin, 'using server.notes.redis');
-        plugin.db = server.notes.redis;
-        nextOnce();
-    }
+    plugin.db = plugin.get_redis_client(plugin.cfg.redis, nextOnce);
 }
 
 exports.shutdown = function () {
