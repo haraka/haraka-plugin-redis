@@ -8,10 +8,10 @@ exports.register = function () {
 
     plugin.load_redis_ini();
 
-    // another plugin doing: inherits('haraka-plugin-redis')
+    // another plugin has called us with: inherits('haraka-plugin-redis')
     if (plugin.name !== 'redis') return;
 
-    // do register these when 'redis' is declared in config/plugins
+    // register these when 'redis' is declared in config/plugins
     plugin.register_hook('init_master',  'init_redis_shared');
     plugin.register_hook('init_child',   'init_redis_shared');
 }

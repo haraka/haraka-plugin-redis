@@ -1,7 +1,7 @@
 version: 1.0.{build}
 
 environment:
-  nodejs_version: "8"
+  nodejs_version: "10"
 
 # Install scripts. (runs after repo cloning)
 install:
@@ -18,5 +18,5 @@ before_test:
   - npm --version
 
 test_script:
-  - node run_tests
+  - npm test
 

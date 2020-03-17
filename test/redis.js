@@ -1,16 +1,9 @@
 'use strict';
 
-const path = require('path');
+const assert = require('assert')
+const path   = require('path')
 
-const fixtures = require('haraka-test-fixtures');
-
-function _set_up_redis (done) {
-
-    this.plugin = new fixtures.plugin('index');
-    this.plugin.register();
-
-    done();
-}
+const fixtures = require('haraka-test-fixtures')
 
 function retry (options) {
     if (options.error) {
@@ -19,24 +12,28 @@ function retry (options) {
     return undefined;
 }
 
-exports.config = {
-    setUp : _set_up_redis,
-    'loads' : function (test) {
-        test.expect(1);
-        test.equal(this.plugin.name, 'index');
-        test.done();
-    },
-    'config defaults' : function (test) {
-        test.expect(2);
-        test.equal(this.plugin.redisCfg.server.host, '127.0.0.1');
-        test.equal(this.plugin.redisCfg.server.port, 6379);
-        test.done();
-    },
-    'merges [opts] into server config': function (test) {
+describe('config', function () {
+    before(function (done) {
+        this.plugin = new fixtures.plugin('index')
+        this.plugin.register()
+        done()
+    })
+
+    it('loads', function (done) {
+        assert.equal(this.plugin.name, 'index');
+        done()
+    })
+
+    it('config defaults', function (done) {
+        assert.equal(this.plugin.redisCfg.server.host, '127.0.0.1')
+        assert.equal(this.plugin.redisCfg.server.port, 6379)
+        done()
+    })
+
+    it('merges [opts] into server config', function (done) {
         this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
         this.plugin.load_redis_ini();
-        test.expect(1);
-        test.deepEqual(this.plugin.redisCfg, {
+        assert.deepEqual(this.plugin.redisCfg, {
             main: {},
             pubsub: {
                 host: '127.0.0.1',
@@ -52,63 +49,66 @@ exports.config = {
                 password: 'dontUseThisOne'
             }
         });
-        test.done();
-    },
-    'merges redis.ini [opts] into plugin config': function (test) {
+        done();
+    })
+
+    it('merges redis.ini [opts] into plugin config', function (done) {
         this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
         this.plugin.load_redis_ini();
         this.plugin.cfg = {};
         this.plugin.merge_redis_ini();
-        test.expect(1);
-        test.deepEqual(this.plugin.cfg, {
+        assert.deepEqual(this.plugin.cfg, {
             redis: {
                 host: '127.0.0.1',
                 port: '6379',
                 db: 5,
                 password: 'dontUseThisOne'
             }
-        });
-        test.done();
-    },
-}
+        })
+        done()
+    })
+})
 
-exports.connects = {
-    setUp : _set_up_redis,
-    'loads' : function (test) {
-        test.expect(1);
-        test.equal(this.plugin.name, 'index');
-        test.done();
-    },
-    'connects' : function (test) {
-        test.expect(1);
+describe('connects', function () {
+    before(function (done) {
+        this.plugin = new fixtures.plugin('index')
+        this.plugin.register()
+        done()
+    })
+
+    it('loads', function (done) {
+        assert.equal(this.plugin.name, 'index');
+        done();
+    })
+
+    it('connects', function (done) {
         const redis = this.plugin.get_redis_client({
             host: this.plugin.redisCfg.server.host,
             port: this.plugin.redisCfg.server.port,
             retry_strategy: retry,
         },
         function () {
-            test.ok(redis.connected);
-            test.done();
+            assert.ok(redis.connected);
+            done();
         });
-    },
-    'populates plugin.cfg.redis when asked' : function (test) {
-        test.expect(2);
-        test.equal(this.plugin.cfg, undefined);
+    })
+
+    it('populates plugin.cfg.redis when asked', function (done) {
+        assert.equal(this.plugin.cfg, undefined);
         this.plugin.merge_redis_ini();
-        test.deepEqual(this.plugin.cfg.redis, { host: '127.0.0.1', port: '6379' });
-        test.done();
-    },
-    'connects to a different redis db' : function (test) {
-        test.expect(2);
+        assert.deepEqual(this.plugin.cfg.redis, { host: '127.0.0.1', port: '6379' });
+        done();
+    })
+
+    it('connects to a different redis db', function (done) {
         this.plugin.merge_redis_ini();
         this.plugin.cfg.redis.db = 2;
         this.plugin.cfg.redis.retry_strategy = retry;
         const client = this.plugin.get_redis_client(this.plugin.cfg.redis, function () {
-            test.expect(2);
             // console.log(client);
-            test.equal(client.connected, true);
-            test.equal(client.selected_db, 2);
-            test.done();
-        });
-    }
-};
+            assert.equal(client.connected, true)
+            assert.equal(client.selected_db, 2)
+            done()
+        })
+    })
+})
