@@ -16,3 +16,4 @@ globals:
   DENYSOFT: true
   DENYDISCONNECT: true
   DENYSOFTDISCONNECT: true
+  connection: true
