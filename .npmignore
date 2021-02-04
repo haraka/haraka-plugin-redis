@@ -6,3 +6,5 @@
 .lgtm.yml
 .appveyor.yml
 .travis.yml
+.eslintrc.yaml
+.eslintrc.json

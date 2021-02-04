@@ -34,9 +34,7 @@ describe('config', function () {
         this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
         this.plugin.load_redis_ini();
         assert.deepEqual(this.plugin.redisCfg, {
-            main: {
-                // "host": "localhost"
-            },
+            main: {},
             pubsub: {
                 host: '127.0.0.1',
                 port: '6379',
