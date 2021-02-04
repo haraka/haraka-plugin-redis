@@ -140,22 +140,21 @@ function getUriStr (client, opts) {
 }
 
 exports.get_redis_client = function (opts, next) {
-    const plugin = this;
 
     const client = redis.createClient(opts);
     const urlStr = getUriStr(client, opts);
 
     client
         .on('error', (err) => {
-            plugin.logerror(err.message);
+            this.logerror(err.message);
             next(err);
         })
         .on('ready', () => {
-            plugin.loginfo(`connected to ${urlStr}`);
+            this.loginfo(`connected to ${urlStr}`);
             next();
         })
         .on('end', () => {
-            plugin.loginfo(`Disconnected from ${urlStr}`);
+            this.loginfo(`Disconnected from ${urlStr}`);
         });
 
     return client;
@@ -230,11 +229,10 @@ exports.redis_subscribe = function (connection, next) {
 }
 
 exports.redis_unsubscribe = function (connection) {
-    const plugin = this;
 
     if (!connection.notes.redis) {
-        connection.logerror(plugin, `redis_unsubscribe called when no redis`)
+        connection.logerror(this, `redis_unsubscribe called when no redis`)
         return;
     }
-    connection.notes.redis.punsubscribe(plugin.get_redis_sub_channel(connection));
+    connection.notes.redis.punsubscribe(this.get_redis_sub_channel(connection));
 }

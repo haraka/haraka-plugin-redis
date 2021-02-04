@@ -14,21 +14,27 @@ The `redis.ini` file has the following sections (defaults shown):
 
 ### [server]
 
-    ; host=127.0.0.1
-    ; port=6379
+```ini
+; host=127.0.0.1
+; port=6379
+```
 
 ### [pubsub]
 
-    ; host=127.0.0.1
-    ; port=6379
+```ini
+; host=127.0.0.1
+; port=6379
+```
 
 Publish & Subscribe are DB agnostic and thus have no db setting. If host and port and not defined, they default to the same as [server] settings.
 
 ### [opts]
 
-    ; see https://www.npmjs.com/package/redis#options-object-properties
-    ; db=0
-    ; password=battery-horse-staple
+```ini
+; see https://www.npmjs.com/package/redis#options-object-properties
+; db=0
+; password=battery-horse-staple
+```
 
 Options specified in `redis.ini[opts]` are applied to the server config, the pubsub config, AND the configurations of any plugins that inherit this plugin. This is ideal if the redis server requires a password. Specify it once in [opts]. If other redis connections need a different value (such as a unique DB), they must specify it. For plugins, all options are stored in the plugins `[redis]` section of its config file.
 
@@ -36,62 +42,69 @@ Options specified in `redis.ini[opts]` are applied to the server config, the pub
 
 Use redis in your plugin like so:
 
-    if (server.notes.redis) {
-        server.notes.redis.hgetall(...);
-            // or any other redis command
-    }
+```js
+if (server.notes.redis) {
+    server.notes.redis.hgetall(...);
+        // or any other redis command
+}
+```
 
 ## Publish/Subscribe Usage
 
 In your plugin:
 
-    exports.results_init = function (next, connection) {
-        var plugin = this;
-        plugin.redis_subscribe(connection, function () {
-            connection.notes.redis.on('pmessage', function (pattern, channel, message) {
-                plugin.do_something_with_message(message, ...);
-            });
-            next();
-        });
-    }
-    // be nice to redis and disconnect
-    exports.hook_disconnect = function (next, connection) {
-        this.redis_unsubscribe(connection);
-    }
+```js
+exports.results_init = function (next, connection) {
+    this.redis_subscribe(connection, () => {
+        connection.notes.redis.on('pmessage', (pattern, channel, message) => {
+            this.do_something_with_message(message, ...)
+        })
+        next()
+    })
+}
+// be nice to redis and disconnect
+exports.hook_disconnect = function (next, connection) {
+    this.redis_unsubscribe(connection)
+}
+```
 
 ## Custom Usage
 
 This variation lets your plugin establish its own Redis connection,
 optionally with a redis db ID. All redis config options must be listed in your plugins config file in the [redis] section.
 
-    exports.register = function () {
-        const plugin = this;
-        plugin.inherits('redis');
+```js
+exports.register = function () {
+    const plugin = this;
+    plugin.inherits('redis');
 
-        plugin.cfg = plugin.config.get('my-plugin.ini');
+    plugin.cfg = plugin.config.get('my-plugin.ini');
 
-        // populate plugin.cfg.redis with defaults from redis.ini
-        plugin.merge_redis_ini();
+    // populate plugin.cfg.redis with defaults from redis.ini
+    plugin.merge_redis_ini();
 
-        // cluster aware redis connection(s)
-        plugin.register_hook('init_master', 'init_redis_plugin');
-        plugin.register_hook('init_child',  'init_redis_plugin');
-    }
+    // cluster aware redis connection(s)
+    plugin.register_hook('init_master', 'init_redis_plugin');
+    plugin.register_hook('init_child',  'init_redis_plugin');
+}
+```
 
 When a db ID is specified in the [redis] section of a redis inheriting plugin, log messages like these will be emitted when Haraka starts:
 
-    [INFO] [-] [redis] connected to redis://172.16.15.16:6379 v3.2.6
-    [INFO] [-] [limit] connected to redis://172.16.15.16:6379/1 v3.2.6
-    [INFO] [-] [karma] connected to redis://172.16.15.16:6379/2 v3.2.6
-    [INFO] [-] [known-senders] connected to redis://172.16.15.16:6379/3 v3.2.6
+````
+[INFO] [-] [redis] connected to redis://172.16.15.16:6379 v3.2.6
+[INFO] [-] [limit] connected to redis://172.16.15.16:6379/1 v3.2.6
+[INFO] [-] [karma] connected to redis://172.16.15.16:6379/2 v3.2.6
+[INFO] [-] [known-senders] connected to redis://172.16.15.16:6379/3 v3.2.6
+````
 
 Notice the database ID numbers appended to each plugins redis connection
 message.
 
 
 
-[ci-img]: https://travis-ci.org/haraka/haraka-plugin-redis.svg
-[ci-url]: https://travis-ci.org/haraka/haraka-plugin-redis
+[ci-img]: https://github.com/haraka/haraka-plugin-redis/workflows/Tests/badge.svg
+[ci-url]: https://github.com/haraka/haraka-plugin-redis/actions?query=workflow%3ATests
 [clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-redis/badges/gpa.svg
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis
 [apv-img]: https://ci.appveyor.com/api/projects/status/fxk78f25n61nq3lx?svg=true
