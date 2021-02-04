@@ -1,13 +1,21 @@
 
+### 1.0.13 - 2021-MM-DD
+
+- switch CI from Travis to GitHub Actions
+- README: update formatting with GFM
+
+
 ### 1.0.12 - 2020-03-16
 
 - replace nodeunit with mocha
 - update redis lib to v3
 - appveyor: test on node 10
 
+
 ### 1.0.11 - 2019-04-11
 
 - create custom connection only after: all 3 conditions match
+
 
 ### 1.0.10 - 2019-04-09
 
