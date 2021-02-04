@@ -8,8 +8,6 @@ install:
   - ps: Install-Product node $env:nodejs_version
   - npm install
   - choco install memurai-developer
-  # - redis-server --service-install
-  # - redis-server --service-start
 
 build: off
 
