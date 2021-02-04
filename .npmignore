@@ -4,7 +4,7 @@
 .gitignore
 .gitmodules
 .lgtm.yml
-.appveyor.yml
+appveyor.yml
 .travis.yml
 .eslintrc.yaml
 .eslintrc.json
