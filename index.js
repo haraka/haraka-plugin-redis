@@ -1,7 +1,7 @@
 'use strict';
 /* global server */
 
-const redis  = require('redis');
+const redis = require('redis');
 
 exports.register = function () {
     const plugin = this;
@@ -11,9 +11,9 @@ exports.register = function () {
     // another plugin has called us with: inherits('haraka-plugin-redis')
     if (plugin.name !== 'redis') return;
 
-    // register these when 'redis' is declared in config/plugins
-    plugin.register_hook('init_master',  'init_redis_shared');
-    plugin.register_hook('init_child',   'init_redis_shared');
+    // register when 'redis' is declared in config/plugins
+    plugin.register_hook('init_master', 'init_redis_shared');
+    plugin.register_hook('init_child',  'init_redis_shared');
 }
 
 const defaultOpts = { host: '127.0.0.1', port: '6379' };

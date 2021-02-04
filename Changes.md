@@ -1,4 +1,9 @@
 
+### 1.0.13 - 2021-MM-DD
+
+- switch CI from Travis/Appveyor to GitHub Actions
+- 
+
 ### 1.0.12 - 2020-03-16
 
 - replace nodeunit with mocha

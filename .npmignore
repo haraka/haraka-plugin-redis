@@ -1,0 +1,8 @@
+.github
+.DS_Store
+.editorconfig
+.gitignore
+.gitmodules
+.lgtm.yml
+.appveyor.yml
+.travis.yml

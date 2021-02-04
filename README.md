@@ -3,7 +3,6 @@
 [![Build Status][ci-img]][ci-url]
 [![Code Climate][clim-img]][clim-url]
 [![Windows Build status][apv-img]][apv-url]
-[![Greenkeeper badge][gk-img]][gk-url]
 
 Connects to a redis instance. By default it stores a `redis`
 connection handle at `server.notes.redis`. See below to get a custom DB handle
@@ -97,5 +96,3 @@ message.
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis
 [apv-img]: https://ci.appveyor.com/api/projects/status/fxk78f25n61nq3lx?svg=true
 [apv-url]: https://ci.appveyor.com/project/msimerson/haraka-plugin-redis
-[gk-img]: https://badges.greenkeeper.io/haraka/haraka-plugin-redis.svg
-[gk-url]: https://greenkeeper.io/
