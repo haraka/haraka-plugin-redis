@@ -1,5 +1,5 @@
 
-### 1.0.13 - 2021-MM-DD
+### 1.0.13 - 2021-10-14
 
 - switch CI from Travis to GitHub Actions
 - README: update formatting with GFM
