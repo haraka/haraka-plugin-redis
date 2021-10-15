@@ -2,7 +2,6 @@
 
 [![Build Status][ci-img]][ci-url]
 [![Code Climate][clim-img]][clim-url]
-[![Windows Build status][apv-img]][apv-url]
 
 Connects to a redis instance. By default it stores a `redis`
 connection handle at `server.notes.redis`. See below to get a custom DB handle
@@ -107,5 +106,3 @@ message.
 [ci-url]: https://github.com/haraka/haraka-plugin-redis/actions?query=workflow%3ATests
 [clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-redis/badges/gpa.svg
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis
-[apv-img]: https://ci.appveyor.com/api/projects/status/fxk78f25n61nq3lx?svg=true
-[apv-url]: https://ci.appveyor.com/project/msimerson/haraka-plugin-redis
