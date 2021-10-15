@@ -7,10 +7,10 @@
     "test": "test"
   },
   "dependencies": {
-    "redis": "^3.0.2"
+    "redis": "^3.1.2"
   },
   "devDependencies": {
-    "eslint": "*",
+    "eslint": ">=7",
     "eslint-plugin-haraka": "*",
     "haraka-test-fixtures": "*",
     "mocha": "*"
