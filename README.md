@@ -30,8 +30,8 @@ Publish & Subscribe are DB agnostic and thus have no db setting. If host and por
 ### [opts]
 
 ```ini
-; see https://www.npmjs.com/package/redis#options-object-properties
-; db=0
+; see https://github.com/redis/node-redis/blob/HEAD/docs/client-configuration.md
+; database=0
 ; password=battery-horse-staple
 ```
 
@@ -74,17 +74,16 @@ optionally with a redis db ID. All redis config options must be listed in your p
 
 ```js
 exports.register = function () {
-    const plugin = this;
-    plugin.inherits('redis');
+    this.inherits('redis');
 
-    plugin.cfg = plugin.config.get('my-plugin.ini');
+    this.cfg = this.config.get('my-plugin.ini');
 
     // populate plugin.cfg.redis with defaults from redis.ini
-    plugin.merge_redis_ini();
+    this.merge_redis_ini();
 
     // cluster aware redis connection(s)
-    plugin.register_hook('init_master', 'init_redis_plugin');
-    plugin.register_hook('init_child',  'init_redis_plugin');
+    this.register_hook('init_master', 'init_redis_plugin');
+    this.register_hook('init_child',  'init_redis_plugin');
 }
 ```
 
@@ -101,8 +100,7 @@ Notice the database ID numbers appended to each plugins redis connection
 message.
 
 
-
-[ci-img]: https://github.com/haraka/haraka-plugin-redis/workflows/Tests/badge.svg
-[ci-url]: https://github.com/haraka/haraka-plugin-redis/actions?query=workflow%3ATests
+[ci-img]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci-test.yml/badge.svg
+[ci-url]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci-test.yml
 [clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-redis/badges/gpa.svg
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis

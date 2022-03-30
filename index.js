@@ -4,16 +4,14 @@
 const redis = require('redis');
 
 exports.register = function () {
-    const plugin = this;
-
-    plugin.load_redis_ini();
+    this.load_redis_ini();
 
     // another plugin has called us with: inherits('haraka-plugin-redis')
-    if (plugin.name !== 'redis') return;
+    if (this.name !== 'redis') return;
 
     // register when 'redis' is declared in config/plugins
-    plugin.register_hook('init_master', 'init_redis_shared');
-    plugin.register_hook('init_child',  'init_redis_shared');
+    this.register_hook('init_master', 'init_redis_shared');
+    this.register_hook('init_child',  'init_redis_shared');
 }
 
 const defaultOpts = { socket: { host: '127.0.0.1', port: '6379' } }
@@ -52,13 +50,12 @@ exports.load_redis_ini = function () {
 }
 
 exports.merge_redis_ini = function () {
-    const plugin = this;
 
-    if (!plugin.cfg)       plugin.cfg = {};   // no <plugin>.ini loaded?
-    if (!plugin.cfg.redis) plugin.cfg.redis = {}; // no [redis] in <plugin>.ini file
-    if (!plugin.redisCfg)  plugin.load_redis_ini();
+    if (!this.cfg)       this.cfg = {};   // no <plugin>.ini loaded?
+    if (!this.cfg.redis) this.cfg.redis = {}; // no [redis] in <plugin>.ini file
+    if (!this.redisCfg)  this.load_redis_ini();
 
-    plugin.cfg.redis = Object.assign({}, plugin.redisCfg.server, plugin.cfg.redis);
+    this.cfg.redis = Object.assign({}, this.redisCfg.server, this.cfg.redis);
 }
 
 exports.init_redis_shared = function (next, server) {
@@ -127,21 +124,20 @@ exports.shutdown = function () {
 }
 
 exports.redis_ping = async function () {
-    const plugin = this;
 
-    plugin.redis_pings=false;
+    this.redis_pings=false;
 
-    if (!plugin.db) {
+    if (!this.db) {
         return new Error('redis not initialized');
     }
 
     try {
-        const r = await plugin.db.ping()
+        const r = await this.db.ping()
         if (r !== 'PONG') return new Error('not PONG');
-        plugin.redis_pings=true
+        this.redis_pings=true
     }
     catch (e) {
-        plugin.logerror(e.message)
+        this.logerror(e.message)
     }
 }
 
@@ -194,14 +190,13 @@ exports.get_redis_sub_channel = function (conn) {
 }
 
 exports.redis_subscribe_pattern = async function (pattern) {
-    const plugin = this;
 
-    if (plugin.redis) return // already subscribed?
+    if (this.redis) return // already subscribed?
 
-    plugin.redis = await redis.createClient(plugin.redisCfg.pubsub)
+    this.redis = await redis.createClient(this.redisCfg.pubsub)
 
-    await plugin.redis.psubscribe(pattern);
-    plugin.logdebug(plugin, `psubscribed to ${pattern}`);
+    await this.redis.psubscribe(pattern);
+    this.logdebug(this, `psubscribed to ${pattern}`);
 }
 
 exports.redis_subscribe = async function (connection) {

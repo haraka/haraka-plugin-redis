@@ -1,5 +1,6 @@
 
-### 1.0.14 - 2022-03-29
+
+### 2.0.0 - 2022-03-29
 
 - bump redis major version 3 -> 4
 - API change, callbacks replaced by promises
