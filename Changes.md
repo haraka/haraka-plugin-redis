@@ -1,4 +1,10 @@
 
+### 1.0.14 - 2022-03-29
+
+- bump redis major version 3 -> 4
+- API change, callbacks replaced by promises
+
+
 ### 1.0.13 - 2021-10-14
 
 - switch CI from Travis to GitHub Actions

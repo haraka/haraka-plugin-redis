@@ -11,7 +11,7 @@ attached to another database.
 
 The `redis.ini` file has the following sections (defaults shown):
 
-### [server]
+### [socket]
 
 ```ini
 ; host=127.0.0.1
@@ -25,7 +25,7 @@ The `redis.ini` file has the following sections (defaults shown):
 ; port=6379
 ```
 
-Publish & Subscribe are DB agnostic and thus have no db setting. If host and port and not defined, they default to the same as [server] settings.
+Publish & Subscribe are DB agnostic and thus have no db setting. If host and port and not defined, they default to the same as [socket] settings.
 
 ### [opts]
 

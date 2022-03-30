@@ -4,8 +4,11 @@
 .gitignore
 .gitmodules
 .lgtm.yml
-appveyor.yml
+http/bower_components
+http/node_modules
 .travis.yml
+appveyor.yml
 .eslintrc.yaml
 .eslintrc.json
 codecov.yml
+.codeclimate.yml

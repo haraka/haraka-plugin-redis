@@ -2,6 +2,9 @@ name: Tests
 
 on: [ push ]
 
+env:
+  CI: true
+
 jobs:
 
   ci-test:
@@ -19,9 +22,6 @@ jobs:
         os: [ ubuntu-latest ]
         node-version: [ 12, 14, 16]
       fail-fast: false
-
-    env:
-      CI: true
 
     steps:
     - uses: actions/checkout@v2

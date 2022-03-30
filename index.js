@@ -16,7 +16,7 @@ exports.register = function () {
     plugin.register_hook('init_child',  'init_redis_shared');
 }
 
-const defaultOpts = { host: '127.0.0.1', port: '6379' };
+const defaultOpts = { socket: { host: '127.0.0.1', port: '6379' } }
 
 exports.load_redis_ini = function () {
     const plugin = this;
@@ -28,10 +28,27 @@ exports.load_redis_ini = function () {
     });
 
     const rc = plugin.redisCfg;
-    plugin.redisCfg.server = Object.assign({}, defaultOpts, rc.opts, rc.server);
-    if (rc.server.ip && !rc.server.host) rc.server.host = rc.server.ip;  // backwards compat
+    plugin.redisCfg.server = Object.assign({}, defaultOpts, rc.opts, rc.socket);
 
-    plugin.redisCfg.pubsub = Object.assign({}, defaultOpts, rc.opts, rc.server, rc.pubsub);
+    // backwards compat
+    if (rc.server.ip && !rc.server.host) {
+        rc.server.host = rc.server.ip
+        delete rc.server.ip
+    }
+
+    // backwards compat with node-redis < 4
+    if (rc.server && !rc.socket) {
+        rc.socket = rc.server
+        delete rc.server
+    }
+
+    // same as above
+    if (rc.db && !rc.database) {
+        rc.database = rc.db
+        delete rc.db
+    }
+
+    plugin.redisCfg.pubsub = Object.assign({}, defaultOpts, rc.opts, rc.socket, rc.pubsub);
 }
 
 exports.merge_redis_ini = function () {
@@ -87,7 +104,7 @@ exports.init_redis_plugin = function (next, server) {
     if (!plugin.cfg) plugin.cfg = { redis: {} };
     if (!server) server = { notes: {} };
 
-    const pidb = plugin.cfg.redis.db;
+    const pidb = plugin.cfg.redis.database;
     if (server.notes.redis) {    // server-wide redis is available
         // and the DB not specified or is the same as server-wide
         if (pidb === undefined || pidb === plugin.redisCfg.db) {
@@ -102,62 +119,70 @@ exports.init_redis_plugin = function (next, server) {
 }
 
 exports.shutdown = function () {
-    if (this.db) this.db.quit();
+    if (this.db) this.db.disconnect();
 
     if (server && server.notes && server.notes.redis) {
-        server.notes.redis.quit();
+        server.notes.redis.disconnect();
     }
 }
 
-exports.redis_ping = function (done) {
+exports.redis_ping = async function () {
     const plugin = this;
 
-    function nope (err) {
-        if (err) plugin.logerror(err.message);
-        plugin.redis_pings=false;
-        done(err);
-    }
+    plugin.redis_pings=false;
 
     if (!plugin.db) {
-        return nope(new Error('redis not initialized'));
+        return new Error('redis not initialized');
     }
 
-    plugin.db.ping((err, res) => {
-        if (err) return nope(err);
-        if (res !== 'PONG') return nope(new Error('not PONG'));
-        plugin.redis_pings=true;
-        done(err, true);
-    });
+    try {
+        const r = await plugin.db.ping()
+        if (r !== 'PONG') return new Error('not PONG');
+        plugin.redis_pings=true
+    }
+    catch (e) {
+        plugin.logerror(e.message)
+    }
 }
 
 function getUriStr (client, opts) {
-    let msg = `redis://${opts.host}:${opts.port}`;
-    if (opts.db) msg += `/${opts.db}`;
-    if (client && client.server_info && client.server_info.redis_version) {
-        msg += `\tv${client.server_info.redis_version}`;
+    let msg = `redis://${opts?.socket?.host}:${opts?.socket?.port}`;
+    if (opts.database) msg += `/${opts.database}`;
+    if (client?.server_info?.redis_version) {
+        msg += `\tv${client?.server_info?.redis_version}`;
     }
     return msg;
 }
 
-exports.get_redis_client = function (opts, next) {
+exports.get_redis_client = async function (opts) {
 
-    const client = redis.createClient(opts);
-    const urlStr = getUriStr(client, opts);
+    const client = redis.createClient(opts)
+
+    let urlStr
 
     client
         .on('error', (err) => {
             this.logerror(err.message);
-            next(err);
-        })
-        .on('ready', () => {
-            this.loginfo(`connected to ${urlStr}`);
-            next();
         })
         .on('end', () => {
             this.loginfo(`Disconnected from ${urlStr}`);
-        });
+        })
 
-    return client;
+
+    try {
+        await client.connect()
+
+        if (opts.database) client.dbid = opts.database
+
+        client.server_info = await client.info()
+        urlStr = getUriStr(client, opts)
+        this.loginfo(`connected to ${urlStr}`);
+
+        return client
+    }
+    catch (e) {
+        console.error(e)
+    }
 }
 
 exports.get_redis_pub_channel = function (conn) {
@@ -168,71 +193,46 @@ exports.get_redis_sub_channel = function (conn) {
     return `result-${conn.uuid}*`;
 }
 
-exports.redis_subscribe_pattern = function (pattern, next) {
+exports.redis_subscribe_pattern = async function (pattern) {
     const plugin = this;
 
-    if (plugin.redis) return next(); // already subscribed?
+    if (plugin.redis) return // already subscribed?
 
-    plugin.redis = require('redis').createClient(plugin.redisCfg.pubsub)
-        .on('error', function (err) {
-            next(err.message);
-        })
-        .on('psubscribe', function (pattern2, count) {
-            plugin.logdebug(plugin, `psubscribed to ${pattern2}`);
-            next();
-        })
-        .on('punsubscribe', function (pattern3, count) {
-            plugin.logdebug(plugin, `unsubsubscribed from ${pattern3}`);
-            connection.notes.redis.quit();
-        });
+    plugin.redis = await redis.createClient(plugin.redisCfg.pubsub)
 
-    plugin.redis.psubscribe(pattern);
+    await plugin.redis.psubscribe(pattern);
+    plugin.logdebug(plugin, `psubscribed to ${pattern}`);
 }
 
-exports.redis_subscribe = function (connection, next) {
-    const plugin = this;
+exports.redis_subscribe = async function (connection) {
 
     if (connection.notes.redis) {
-        connection.logdebug(plugin, `redis already subscribed`);
-        // another plugin has already called this. Do nothing
-        return next();
-    }
-
-    let calledNext = false;
-    function nextOnce (errMsg) {
-        if (calledNext) return;
-        calledNext = true;
-        if (errMsg && connection) connection.logerror(plugin, errMsg);
-        next();
+        connection.logdebug(this, `redis already subscribed`);
+        return; // another plugin has already called this.
     }
 
     const timer = setTimeout(() => {
-        nextOnce('redis psubscribe timed out');
+        connection.logerror('redis psubscribe timed out');
     }, 3 * 1000);
 
-    connection.notes.redis = require('redis').createClient(plugin.redisCfg.pubsub)
-        .on('error', (err) => {
-            clearTimeout(timer);
-            nextOnce(err.message);
-        })
-        .on('psubscribe', function (pattern, count) {
-            clearTimeout(timer);
-            connection.logdebug(plugin, `psubscribed to ${pattern}`);
-            nextOnce();
-        })
-        .on('punsubscribe', function (pattern, count) {
-            connection.logdebug(plugin, `unsubsubscribed from ${pattern}`);
-            connection.notes.redis.quit();
-        });
+    connection.notes.redis = await redis.createClient(this.redisCfg.pubsub)
 
-    connection.notes.redis.psubscribe(plugin.get_redis_sub_channel(connection));
+    clearTimeout(timer);
+
+    const pattern = this.get_redis_sub_channel(connection)
+    connection.notes.redis.psubscribe(pattern);
+    connection.logdebug(this, `psubscribed to ${pattern}`);
 }
 
-exports.redis_unsubscribe = function (connection) {
+exports.redis_unsubscribe = async function (connection) {
 
     if (!connection.notes.redis) {
         connection.logerror(this, `redis_unsubscribe called when no redis`)
         return;
     }
-    connection.notes.redis.punsubscribe(this.get_redis_sub_channel(connection));
+
+    const pattern = this.get_redis_sub_channel(connection)
+    await connection.notes.redis.punsubscribe(pattern);
+    connection.logdebug(this, `unsubsubscribed from ${pattern}`);
+    connection.notes.redis.disconnect();
 }

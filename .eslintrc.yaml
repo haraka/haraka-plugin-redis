@@ -9,6 +9,9 @@ extends: [ eslint:recommended, plugin:haraka/recommended ]
 
 root: true
 
+parserOptions:
+  ecmaVersion: 2020
+
 globals:
   OK: true
   CONT: true
