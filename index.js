@@ -195,11 +195,11 @@ exports.redis_subscribe_pattern = async function (pattern) {
 
     this.redis = await redis.createClient(this.redisCfg.pubsub)
 
-    await this.redis.psubscribe(pattern);
-    this.logdebug(this, `psubscribed to ${pattern}`);
+    await this.redis.subscribe(pattern);
+    this.logdebug(this, `subscribed to ${pattern}`);
 }
 
-exports.redis_subscribe = async function (connection) {
+exports.redis_subscribe = async function (connection, event) {
 
     if (connection.notes.redis) {
         connection.logdebug(this, `redis already subscribed`);
@@ -207,7 +207,7 @@ exports.redis_subscribe = async function (connection) {
     }
 
     const timer = setTimeout(() => {
-        connection.logerror('redis psubscribe timed out');
+        connection.logerror('redis subscribe timed out');
     }, 3 * 1000);
 
     connection.notes.redis = await redis.createClient(this.redisCfg.pubsub)
@@ -215,8 +215,8 @@ exports.redis_subscribe = async function (connection) {
     clearTimeout(timer);
 
     const pattern = this.get_redis_sub_channel(connection)
-    connection.notes.redis.psubscribe(pattern);
-    connection.logdebug(this, `psubscribed to ${pattern}`);
+    connection.notes.redis.subscribe(pattern, event);
+    connection.logdebug(this, `subscribed to ${pattern}`);
 }
 
 exports.redis_unsubscribe = async function (connection) {
@@ -227,7 +227,7 @@ exports.redis_unsubscribe = async function (connection) {
     }
 
     const pattern = this.get_redis_sub_channel(connection)
-    await connection.notes.redis.punsubscribe(pattern);
+    await connection.notes.redis.unsubscribe(pattern);
     connection.logdebug(this, `unsubsubscribed from ${pattern}`);
     connection.notes.redis.disconnect();
 }
