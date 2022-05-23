@@ -3,9 +3,7 @@
 [![Build Status][ci-img]][ci-url]
 [![Code Climate][clim-img]][clim-url]
 
-Connects to a redis instance. By default it stores a `redis`
-connection handle at `server.notes.redis`. See below to get a custom DB handle
-attached to another database.
+Connects to a redis instance. By default it stores a `redis` connection handle at `server.notes.redis`. See below to get a custom DB handle attached to another database.
 
 ## Config
 

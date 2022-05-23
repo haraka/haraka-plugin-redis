@@ -1,5 +1,11 @@
 
 
+### 2.0.1 - 2022-05-23
+
+- fix: rename p* methods -> * (required in redis v4)
+- dep(redis): bump 4.0 -> 4.1
+
+
 ### 2.0.0 - 2022-03-29
 
 - bump redis major version 3 -> 4
