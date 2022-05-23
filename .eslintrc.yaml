@@ -2,15 +2,13 @@ env:
   node: true
   es6: true
   mocha: true
+  es2020: true
 
 plugins: [ haraka ]
 
 extends: [ eslint:recommended, plugin:haraka/recommended ]
 
 root: true
-
-parserOptions:
-  ecmaVersion: 2020
 
 globals:
   OK: true

@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-redis",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Redis plugin for Haraka & other plugins to inherit from",
   "main": "index.js",
   "directories": {
@@ -10,10 +10,10 @@
     "redis": "^4.1.0"
   },
   "devDependencies": {
-    "eslint": "^8.12.0",
+    "eslint": "8",
     "eslint-plugin-haraka": "*",
     "haraka-test-fixtures": "*",
-    "mocha": "^9.2.0"
+    "mocha": "9"
   },
   "scripts": {
     "lint": "npx eslint *.js test/*.js",
