@@ -98,7 +98,7 @@ Notice the database ID numbers appended to each plugins redis connection
 message.
 
 
-[ci-img]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci-test.yml/badge.svg
-[ci-url]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci-test.yml
+[ci-img]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci.yml/badge.svg
+[ci-url]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci.yml
 [clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-redis/badges/gpa.svg
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis

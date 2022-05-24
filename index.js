@@ -72,7 +72,10 @@ exports.init_redis_shared = function (next, server) {
     // this is the server-wide redis, shared by plugins that don't
     // specificy a db ID.
     if (!server.notes.redis) {
-        server.notes.redis = plugin.get_redis_client(plugin.redisCfg.server, nextOnce);
+        plugin.get_redis_client(plugin.redisCfg.server).then(client => {
+            server.notes.redis = client
+            nextOnce()
+        })
         return
     }
 
@@ -98,7 +101,10 @@ exports.init_redis_plugin = function (next, server) {
     }
 
     // tests that do not load config
-    if (!plugin.cfg) plugin.cfg = { redis: {} };
+    if (!plugin.cfg) {
+        plugin.cfg = { redis: {} };
+        if (plugin.redisCfg) plugin.cfg.redis = JSON.parse(JSON.stringify(plugin.redisCfg))
+    }
     if (!server) server = { notes: {} };
 
     const pidb = plugin.cfg.redis.database;
@@ -112,14 +118,17 @@ exports.init_redis_plugin = function (next, server) {
         }
     }
 
-    plugin.db = plugin.get_redis_client(plugin.cfg.redis, nextOnce);
+    plugin.get_redis_client(plugin.cfg.redis).then(client => {
+        plugin.db = client
+        nextOnce()
+    })
 }
 
 exports.shutdown = function () {
-    if (this.db) this.db.disconnect();
+    if (this.db) this.db.quit();
 
     if (server && server.notes && server.notes.redis) {
-        server.notes.redis.disconnect();
+        server.notes.redis.quit();
     }
 }
 
@@ -163,7 +172,6 @@ exports.get_redis_client = async function (opts) {
         .on('end', () => {
             this.loginfo(`Disconnected from ${urlStr}`);
         })
-
 
     try {
         await client.connect()
