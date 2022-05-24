@@ -5,6 +5,7 @@
 - fix: rename p* methods -> * (required in redis v4)
 - fix: add `await ...connect()` as is now required, fixes #32
 - dep(redis): bump 4.0 -> 4.1
+- ci: updated syntax
 
 
 ### 2.0.0 - 2022-03-29
