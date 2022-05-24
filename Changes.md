@@ -1,6 +1,6 @@
 
 
-### 2.0.2 - 2022-05-23
+### 2.0.3 - 2022-05-24
 
 - fix: rename p* methods -> * (required in redis v4)
 - fix: add `await ...connect()` as is now required, fixes #32
