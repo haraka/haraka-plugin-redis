@@ -41,7 +41,7 @@ Use redis in your plugin like so:
 
 ```js
 if (server.notes.redis) {
-    server.notes.redis.hgetall(...);
+    server.notes.redis.hGetAll(...);
         // or any other redis command
 }
 ```
