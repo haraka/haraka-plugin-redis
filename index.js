@@ -35,15 +35,8 @@ exports.load_redis_ini = function () {
     }
 
     // backwards compat with node-redis < 4
-    if (rc.server && !rc.socket) {
-        rc.socket = rc.server
-        delete rc.server
-    }
-
-    // same as above
     if (rc.db && !rc.database) {
         rc.database = rc.db
-        delete rc.db
     }
 
     plugin.redisCfg.pubsub = Object.assign({}, defaultOpts, rc.opts, rc.socket, rc.pubsub);
@@ -59,11 +52,10 @@ exports.merge_redis_ini = function () {
 }
 
 exports.init_redis_shared = function (next, server) {
-    const plugin = this;
 
     let calledNext = false;
     function nextOnce (e) {
-        if (e) plugin.logerror(`Redis error: ${e.message}`);
+        if (e) this.logerror(`Redis error: ${e.message}`);
         if (calledNext) return;
         calledNext = true;
         next();
@@ -72,7 +64,7 @@ exports.init_redis_shared = function (next, server) {
     // this is the server-wide redis, shared by plugins that don't
     // specificy a db ID.
     if (!server.notes.redis) {
-        plugin.get_redis_client(plugin.redisCfg.server).then(client => {
+        this.get_redis_client(this.redisCfg.server).then(client => {
             server.notes.redis = client
             nextOnce()
         })
@@ -82,7 +74,7 @@ exports.init_redis_shared = function (next, server) {
     server.notes.redis.ping((err, res) => {
         if (err) return nextOnce(err);
 
-        plugin.loginfo('already connected');
+        this.loginfo('already connected');
         nextOnce(); // connection is good
     });
 }
@@ -135,24 +127,17 @@ exports.shutdown = function () {
 exports.redis_ping = async function () {
 
     this.redis_pings=false;
+    if (!this.db) throw new Error('redis not initialized');
 
-    if (!this.db) {
-        return new Error('redis not initialized');
-    }
-
-    try {
-        const r = await this.db.ping()
-        if (r !== 'PONG') return new Error('not PONG');
-        this.redis_pings=true
-    }
-    catch (e) {
-        this.logerror(e.message)
-    }
+    const r = await this.db.ping()
+    if (r !== 'PONG') throw new Error('not PONG');
+    this.redis_pings=true
+    return true
 }
 
 function getUriStr (client, opts) {
     let msg = `redis://${opts?.socket?.host}:${opts?.socket?.port}`;
-    if (opts.database) msg += `/${opts.database}`;
+    if (opts?.database) msg += `/${opts?.database}`;
     if (client?.server_info?.redis_version) {
         msg += `\tv${client?.server_info?.redis_version}`;
     }
@@ -176,7 +161,7 @@ exports.get_redis_client = async function (opts) {
     try {
         await client.connect()
 
-        if (opts.database) client.dbid = opts.database
+        if (opts?.database) client.dbid = opts?.database
 
         client.server_info = await client.info()
         urlStr = getUriStr(client, opts)
@@ -186,6 +171,7 @@ exports.get_redis_client = async function (opts) {
     }
     catch (e) {
         console.error(e)
+        this.logerror(e);
     }
 }
 
@@ -201,7 +187,7 @@ exports.redis_subscribe_pattern = async function (pattern) {
 
     if (this.redis) return // already subscribed?
 
-    this.redis = await redis.createClient(this.redisCfg.pubsub)
+    this.redis = redis.createClient(this.redisCfg.pubsub)
     await this.redis.connect()
 
     await this.redis.pSubscribe(pattern);
@@ -219,7 +205,7 @@ exports.redis_subscribe = async function (connection) {
         connection.logerror('redis subscribe timed out');
     }, 3 * 1000);
 
-    connection.notes.redis = await redis.createClient(this.redisCfg.pubsub)
+    connection.notes.redis = redis.createClient(this.redisCfg.pubsub)
     await connection.notes.redis.connect()
 
     clearTimeout(timer);

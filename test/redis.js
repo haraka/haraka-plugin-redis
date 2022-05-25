@@ -90,7 +90,7 @@ describe('connects', function () {
             retry_strategy: retry,
         })
         assert.ok(redis);
-        redis.disconnect()
+        await redis.quit()
     })
 
     it('populates plugin.cfg.redis when asked', async function () {
@@ -107,6 +107,35 @@ describe('connects', function () {
         const res = await client.ping()
         assert.equal(res, 'PONG')
         assert.ok(client)
-        await client.disconnect()
+        await client.quit()
+    })
+})
+
+describe('init_redis_plugin', function () {
+    before(async function () {
+        this.server = { notes: { } }
+
+        this.plugin = new fixtures.plugin('index')
+        this.plugin.register()
+    })
+
+    after(function () {
+        this.plugin.db.quit()
+    })
+
+    it('connects to redis', function (done) {
+        this.plugin.init_redis_plugin(() => {
+            assert.ok(this.plugin.db?.server_info)
+            done()
+        }, this.server)
+    })
+
+    it('pings and gets PONG answer', function (done) {
+        this.plugin.redis_ping()
+            .then(r => {
+                assert.equal(r, true)
+                done()
+            })
+            .catch(done)
     })
 })

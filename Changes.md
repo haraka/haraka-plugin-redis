@@ -1,9 +1,10 @@
 
 
-### 2.0.3 - 2022-05-24
+### 2.0.4 - 2022-05-25
 
 - fix: rename p* methods -> * (required in redis v4)
 - fix: add `await ...connect()` as is now required, fixes #32
+- fix: make redis_ping async function
 - dep(redis): bump 4.0 -> 4.1
 - ci: updated syntax
 
