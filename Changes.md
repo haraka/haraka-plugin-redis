@@ -1,6 +1,6 @@
 
 
-### 2.0.4 - 2022-05-26
+### 2.0.5 - 2022-05-26
 
 - fix: backwards compatibility with legacy plugin config files
 - fix: rename p\* methods -> * (required in redis v4)
