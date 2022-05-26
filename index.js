@@ -15,6 +15,7 @@ exports.register = function () {
 }
 
 const defaultOpts = { socket: { host: '127.0.0.1', port: '6379' } }
+const socketOpts = [ 'host', 'port', 'path', 'tls', 'connectTimeout', 'noDelay', 'keepAlive', 'reconnectStrategy' ]
 
 exports.load_redis_ini = function () {
     const plugin = this;
@@ -25,21 +26,28 @@ exports.load_redis_ini = function () {
         plugin.load_redis_ini();
     });
 
-    const rc = plugin.redisCfg;
-    plugin.redisCfg.server = Object.assign({}, defaultOpts, rc.opts, rc.socket);
-
     // backwards compat
-    if (rc.server.ip && !rc.server.host) {
-        rc.server.host = rc.server.ip
-        delete rc.server.ip
+    if (plugin.redisCfg?.server?.ip && !plugin.redisCfg?.server?.host) {
+        plugin.redisCfg.server.host = plugin.redisCfg.server.ip
+        delete plugin.redisCfg.server.ip
+    }
+    if (plugin.redisCfg.db && !plugin.redisCfg.database) {
+        plugin.redisCfg.database = plugin.redisCfg.db
+        delete plugin.redisCfg.db
     }
 
-    // backwards compat with node-redis < 4
-    if (rc.db && !rc.database) {
-        rc.database = rc.db
-    }
+    plugin.redisCfg.server = Object.assign({}, defaultOpts, plugin.redisCfg.opts, plugin.redisCfg.server);
+    plugin.redisCfg.pubsub = Object.assign({}, defaultOpts, plugin.redisCfg.opts, plugin.redisCfg.pubsub);
 
-    plugin.redisCfg.pubsub = Object.assign({}, defaultOpts, rc.opts, rc.socket, rc.pubsub);
+    // socket options. In redis < 4, the options like host and port were
+    // top level, now they're in socket.*. Permit legacy configs to still work
+    for (const o in socketOpts) {
+        if (plugin.redisCfg.server[o]) plugin.redisCfg.server.socket[o] = plugin.redisCfg.server[o]
+        delete plugin.redisCfg.server[o]
+
+        if (plugin.redisCfg.pubsub[o]) plugin.redisCfg.pubsub.socket[o] = plugin.redisCfg.pubsub[o]
+        delete plugin.redisCfg.pubsub[o]
+    }
 }
 
 exports.merge_redis_ini = function () {
@@ -49,6 +57,17 @@ exports.merge_redis_ini = function () {
     if (!this.redisCfg)  this.load_redis_ini();
 
     this.cfg.redis = Object.assign({}, this.redisCfg.server, this.cfg.redis);
+
+    // backwards compatibility
+    for (const o in socketOpts) {
+        if (this.cfg.redis[o] === undefined) continue
+        this.cfg.redis.server.socket[o] = this.cfg.redis[o]
+        delete this.cfg.redis[o]
+    }
+    if (this.cfg.redis.db && !this.cfg.redis.database) {
+        this.cfg.redis.database = this.cfg.redis.db
+        delete this.cfg.redis.db
+    }
 }
 
 exports.init_redis_shared = function (next, server) {
@@ -92,7 +111,7 @@ exports.init_redis_plugin = function (next, server) {
         next();
     }
 
-    // tests that do not load config
+    // for tests that do not load a shared config
     if (!plugin.cfg) {
         plugin.cfg = { redis: {} };
         if (plugin.redisCfg) plugin.cfg.redis = JSON.parse(JSON.stringify(plugin.redisCfg))
