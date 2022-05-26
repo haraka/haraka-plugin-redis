@@ -16,7 +16,6 @@ describe('config', function () {
     before(async function () {
         this.plugin = new fixtures.plugin('index')
         this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
-        this.plugin.load_redis_ini();
     })
 
     it('loads', async function () {
@@ -24,11 +23,13 @@ describe('config', function () {
     })
 
     it('config defaults', async function () {
+        this.plugin.load_redis_ini();
         assert.equal(this.plugin.redisCfg.server.socket.host, '127.0.0.1')
         assert.equal(this.plugin.redisCfg.server.socket.port, 6379)
     })
 
     it('merges [opts] into server config', async function () {
+        this.plugin.load_redis_ini();
         assert.deepEqual(this.plugin.redisCfg, {
             main: {},
             pubsub: {
@@ -52,6 +53,7 @@ describe('config', function () {
     })
 
     it('merges redis.ini [opts] into plugin config', async function () {
+        this.plugin.load_redis_ini();
         this.plugin.cfg = {};
         this.plugin.merge_redis_ini();
         assert.deepEqual(this.plugin.cfg.redis, {
@@ -111,6 +113,7 @@ describe('init_redis_plugin', function () {
 
         this.plugin = new fixtures.plugin('index')
         this.plugin.register()
+        this.plugin.merge_redis_ini()
     })
 
     after(function () {

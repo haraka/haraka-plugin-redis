@@ -41,12 +41,11 @@ exports.load_redis_ini = function () {
 
     // socket options. In redis < 4, the options like host and port were
     // top level, now they're in socket.*. Permit legacy configs to still work
-    for (const o in socketOpts) {
-        if (plugin.redisCfg.server[o]) plugin.redisCfg.server.socket[o] = plugin.redisCfg.server[o]
-        delete plugin.redisCfg.server[o]
-
-        if (plugin.redisCfg.pubsub[o]) plugin.redisCfg.pubsub.socket[o] = plugin.redisCfg.pubsub[o]
-        delete plugin.redisCfg.pubsub[o]
+    for (const s of [ 'server', 'pubsub' ]) {
+        for (const o of socketOpts) {
+            if (plugin.redisCfg[s][o]) plugin.redisCfg[s].socket[o] = plugin.redisCfg[s][o]
+            delete plugin.redisCfg[s][o]
+        }
     }
 }
 
@@ -59,9 +58,9 @@ exports.merge_redis_ini = function () {
     this.cfg.redis = Object.assign({}, this.redisCfg.server, this.cfg.redis);
 
     // backwards compatibility
-    for (const o in socketOpts) {
+    for (const o of socketOpts) {
         if (this.cfg.redis[o] === undefined) continue
-        this.cfg.redis.server.socket[o] = this.cfg.redis[o]
+        this.cfg.redis.socket[o] = this.cfg.redis[o]
         delete this.cfg.redis[o]
     }
     if (this.cfg.redis.db && !this.cfg.redis.database) {

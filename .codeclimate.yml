@@ -5,6 +5,11 @@ engines:
     config:
       config: ".eslintrc.yaml"
 
+checks:
+  method-complexity:
+    config:
+      threshold: 10
+
 ratings:
    paths:
    - "**.js"
