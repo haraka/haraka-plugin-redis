@@ -1,34 +1,35 @@
 
 
-### 2.0.4 - 2022-05-25
+### 2.0.5 - 2022-05-26
 
+- fix: backwards compatibility with legacy plugin config files
 - fix: rename p\* methods -> * (required in redis v4)
-- fix: add `await ...connect()` as is now required, fixes #32
-- fix: make redis_ping async function
+- fix: add `await client.connect()` as is now required, fixes #32
+- fix: make redis_ping async
 - dep(redis): bump 4.0 -> 4.1
-- ci: updated syntax
+- chore(ci): updated syntax
+- chore(ci): added codeql config
 - test: added tests for init_redis_plugin
 
 
 ### 2.0.0 - 2022-03-29
 
-- bump redis major version 3 -> 4
-- API change, callbacks replaced by promises
+- dep(redis): bump major version 3 -> 4
+- breaking API change: replaced callbacks with promises
 - config.ini
-    - [server] -> [socket] 
     - opts.db -> opts.database (to match upstream)
 
 
 ### 1.0.13 - 2021-10-14
 
-- switch CI from Travis to GitHub Actions
-- README: update formatting with GFM
+- chore(ci): switch CI from Travis to GitHub Actions
+- doc(README): update formatting with GFM
 
 
 ### 1.0.12 - 2020-03-16
 
-- replace nodeunit with mocha
-- update redis lib to v3
+- chore(ci): replace nodeunit with mocha
+- dep(redis): update lib to v3
 - appveyor: test on node 10
 
 

@@ -15,7 +15,7 @@ function retry (options) {
 describe('config', function () {
     before(async function () {
         this.plugin = new fixtures.plugin('index')
-        this.plugin.register()
+        this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
     })
 
     it('loads', async function () {
@@ -23,16 +23,15 @@ describe('config', function () {
     })
 
     it('config defaults', async function () {
+        this.plugin.load_redis_ini();
         assert.equal(this.plugin.redisCfg.server.socket.host, '127.0.0.1')
         assert.equal(this.plugin.redisCfg.server.socket.port, 6379)
     })
 
     it('merges [opts] into server config', async function () {
-        this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
         this.plugin.load_redis_ini();
         assert.deepEqual(this.plugin.redisCfg, {
             main: {},
-            socket: {},
             pubsub: {
                 socket: {
                     host: '127.0.0.1',
@@ -54,19 +53,16 @@ describe('config', function () {
     })
 
     it('merges redis.ini [opts] into plugin config', async function () {
-        this.plugin.config = this.plugin.config.module_config(path.resolve('test'));
         this.plugin.load_redis_ini();
         this.plugin.cfg = {};
         this.plugin.merge_redis_ini();
-        assert.deepEqual(this.plugin.cfg, {
-            redis: {
-                socket: {
-                    host: '127.0.0.1',
-                    port: '6379',
-                },
-                database: 5,
-                password: 'dontUseThisOne'
-            }
+        assert.deepEqual(this.plugin.cfg.redis, {
+            socket: {
+                host: '127.0.0.1',
+                port: '6379',
+            },
+            database: 5,
+            password: 'dontUseThisOne'
         })
     })
 })
@@ -112,11 +108,12 @@ describe('connects', function () {
 })
 
 describe('init_redis_plugin', function () {
-    before(async function () {
+    before(function () {
         this.server = { notes: { } }
 
         this.plugin = new fixtures.plugin('index')
         this.plugin.register()
+        this.plugin.merge_redis_ini()
     })
 
     after(function () {
