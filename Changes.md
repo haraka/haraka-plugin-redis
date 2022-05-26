@@ -7,14 +7,15 @@
 - fix: add `await client.connect()` as is now required, fixes #32
 - fix: make redis_ping async
 - dep(redis): bump 4.0 -> 4.1
-- ci: updated syntax
+- chore(ci): updated syntax
+- chore(ci): added codeql config
 - test: added tests for init_redis_plugin
 
 
 ### 2.0.0 - 2022-03-29
 
 - dep(redis): bump major version 3 -> 4
-- breaking API change, callbacks replaced by promises
+- breaking API change: replaced callbacks with promises
 - config.ini
     - opts.db -> opts.database (to match upstream)
 
