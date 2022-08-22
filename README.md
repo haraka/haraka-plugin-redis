@@ -9,7 +9,7 @@ Connects to a redis instance. By default it stores a `redis` connection handle a
 
 The `redis.ini` file has the following sections (defaults shown):
 
-### [socket]
+### [server]
 
 ```ini
 ; host=127.0.0.1
