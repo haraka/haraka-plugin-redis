@@ -83,3 +83,4 @@
 
 - don't break when no [redis] config exists
 
+[2.0.6]: https://github.com/haraka/haraka-plugin-redis/releases/tag/2.0.6
