@@ -150,6 +150,7 @@ exports.redis_ping = async function () {
     const r = await this.db.ping()
     if (r !== 'PONG') throw new Error('not PONG');
     this.redis_pings=true
+
     return true
 }
 
@@ -193,6 +194,7 @@ exports.get_redis_client = async function (opts) {
     }
 }
 
+
 exports.get_redis_pub_channel = function (conn) {
     return `result-${conn.transaction ? conn.transaction.uuid : conn.uuid}`;
 }
@@ -201,18 +203,20 @@ exports.get_redis_sub_channel = function (conn) {
     return `result-${conn.uuid}*`;
 }
 
-exports.redis_subscribe_pattern = async function (pattern) {
+// formerly used by pi-watch
+exports.redis_subscribe_pattern = async function (pattern, onMessage) {
 
     if (this.redis) return // already subscribed?
 
     this.redis = redis.createClient(this.redisCfg.pubsub)
     await this.redis.connect()
 
-    await this.redis.pSubscribe(pattern);
+    await this.redis.pSubscribe(pattern, onMessage);
     this.logdebug(this, `pSubscribed to ${pattern}`);
 }
 
-exports.redis_subscribe = async function (connection) {
+// the next two functions are use by pi-karma
+exports.redis_subscribe = async function (connection, onMessage) {
 
     if (connection.notes.redis) {
         connection.logdebug(this, `redis already subscribed`);
@@ -229,7 +233,7 @@ exports.redis_subscribe = async function (connection) {
     clearTimeout(timer);
 
     const pattern = this.get_redis_sub_channel(connection)
-    connection.notes.redis.pSubscribe(pattern);
+    connection.notes.redis.pSubscribe(pattern, onMessage);
     connection.logdebug(this, `pSubscribed to ${pattern}`);
 }
 
