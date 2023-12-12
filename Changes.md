@@ -1,4 +1,12 @@
 
+### Unreleased
+
+
+### [2.0.6] - 2023-12-12
+
+- doc(README): '[socket]' is now '[server]' (#39)
+- chore(ci): add .release, updated dot files
+
 
 ### 2.0.5 - 2022-05-26
 
