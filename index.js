@@ -80,7 +80,7 @@ exports.init_redis_shared = function (next, server) {
     }
 
     // this is the server-wide redis, shared by plugins that don't
-    // specificy a db ID.
+    // specify a db ID.
     if (!server.notes.redis) {
         this.get_redis_client(this.redisCfg.server).then(client => {
             server.notes.redis = client
@@ -89,7 +89,7 @@ exports.init_redis_shared = function (next, server) {
         return
     }
 
-    server.notes.redis.ping((err, res) => {
+    server.notes.redis.ping((err) => {
         if (err) return nextOnce(err);
 
         this.loginfo('already connected');
