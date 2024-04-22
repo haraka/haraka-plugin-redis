@@ -2,6 +2,22 @@
 ### Unreleased
 
 
+### [2.0.7] - 2024-04-21
+
+#### Added
+
+- 
+
+#### Fixed
+
+- 
+
+#### Changed
+
+- 
+
+
+
 ### [2.0.6] - 2023-12-12
 
 - doc(README): '[socket]' is now '[server]' (#39)
@@ -92,3 +108,4 @@
 - don't break when no [redis] config exists
 
 [2.0.6]: https://github.com/haraka/haraka-plugin-redis/releases/tag/2.0.6
+[2.0.7]: https://github.com/haraka/haraka-plugin-redis/releases/tag/2.0.7
