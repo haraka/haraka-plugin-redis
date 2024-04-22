@@ -72,31 +72,30 @@ optionally with a redis db ID. All redis config options must be listed in your p
 
 ```js
 exports.register = function () {
-    this.inherits('redis');
+  this.inherits('redis')
 
-    this.cfg = this.config.get('my-plugin.ini');
+  this.cfg = this.config.get('my-plugin.ini')
 
-    // populate plugin.cfg.redis with defaults from redis.ini
-    this.merge_redis_ini();
+  // populate plugin.cfg.redis with defaults from redis.ini
+  this.merge_redis_ini()
 
-    // cluster aware redis connection(s)
-    this.register_hook('init_master', 'init_redis_plugin');
-    this.register_hook('init_child',  'init_redis_plugin');
+  // cluster aware redis connection(s)
+  this.register_hook('init_master', 'init_redis_plugin')
+  this.register_hook('init_child', 'init_redis_plugin')
 }
 ```
 
 When a db ID is specified in the [redis] section of a redis inheriting plugin, log messages like these will be emitted when Haraka starts:
 
-````
+```
 [INFO] [-] [redis] connected to redis://172.16.15.16:6379 v3.2.6
 [INFO] [-] [limit] connected to redis://172.16.15.16:6379/1 v3.2.6
 [INFO] [-] [karma] connected to redis://172.16.15.16:6379/2 v3.2.6
 [INFO] [-] [known-senders] connected to redis://172.16.15.16:6379/3 v3.2.6
-````
+```
 
 Notice the database ID numbers appended to each plugins redis connection
 message.
-
 
 [ci-img]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci.yml/badge.svg
 [ci-url]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci.yml

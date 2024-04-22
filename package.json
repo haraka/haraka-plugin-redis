@@ -3,7 +3,9 @@
   "version": "2.0.7",
   "description": "Redis plugin for Haraka & other plugins to inherit from",
   "main": "index.js",
-  "files": ["config"],
+  "files": [
+    "config"
+  ],
   "directories": {
     "test": "test"
   },
@@ -15,11 +17,14 @@
     "haraka-test-fixtures": "1.3.7"
   },
   "scripts": {
-    "lint": "npx eslint *.js test",
-    "lintfix": "npx eslint@8 --fix *.js test",
-    "cover": "NODE_ENV=cov npx nyc --reporter=lcovonly npm run test",
+    "format": "npm run prettier:fix && npm run lint:fix",
+    "lint": "npx eslint@^8 *.js test",
+    "lint:fix": "npx eslint@^8 *.js test --fix",
+    "prettier": "npx prettier . --check",
+    "prettier:fix": "npx prettier . --write --log-level=warn",
+    "test": "npx mocha@10",
     "versions": "npx dependency-version-checker check",
-    "test": "npx mocha@10"
+    "versions:fix": "npx dependency-version-checker update && npm run prettier:fix"
   },
   "repository": {
     "type": "git",
@@ -27,6 +32,7 @@
   },
   "keywords": [
     "haraka",
+    "haraka-plugin",
     "mail",
     "smtp",
     "redis"
