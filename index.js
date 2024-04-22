@@ -45,18 +45,10 @@ exports.load_redis_ini = function () {
     delete plugin.redisCfg.db
   }
 
-  plugin.redisCfg.server = Object.assign(
-    {},
-    defaultOpts,
-    plugin.redisCfg.opts,
-    plugin.redisCfg.server,
-  )
-  plugin.redisCfg.pubsub = Object.assign(
-    {},
-    defaultOpts,
-    plugin.redisCfg.opts,
-    plugin.redisCfg.pubsub,
-  )
+  plugin.redisCfg.server = 
+    { ...defaultOpts, ...plugin.redisCfg.opts, ...plugin.redisCfg.server };
+  plugin.redisCfg.pubsub = 
+    { ...defaultOpts, ...plugin.redisCfg.opts, ...plugin.redisCfg.pubsub };
 
   // socket options. In redis < 4, the options like host and port were
   // top level, now they're in socket.*. Permit legacy configs to still work

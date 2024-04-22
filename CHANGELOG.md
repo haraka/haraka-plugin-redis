@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### [2.0.7] - 2024-04-21
 
 - populate [files] in package.json. Delete .npmignore.
+- lint: remove duplicate / stale rules from .eslintrc
+- ci: update to shared GHA workflows
+- doc(CONTRIBUTORS): added
+- doc: Changes -> CHANGELOG
+- prettier
 
 ### [2.0.6] - 2023-12-12
 
