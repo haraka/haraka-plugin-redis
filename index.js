@@ -31,7 +31,7 @@ exports.load_redis_ini = function () {
 
   // store redis cfg at redisCfg, to avoid conflicting with plugins that
   // inherit this plugin and have *their* config at plugin.cfg
-  plugin.redisCfg = plugin.config.get('redis.ini', function () {
+  plugin.redisCfg = plugin.config.get('redis.ini', () => {
     plugin.load_redis_ini()
   })
 
