@@ -216,6 +216,9 @@ exports.redis_subscribe_pattern = async function (pattern, onMessage) {
   if (this.redis) return // already subscribed?
 
   this.redis = redis.createClient(this.redisCfg.pubsub)
+  this.redis.on('error', (err) => {
+    this.logerror(err.message)
+  })
   await this.redis.connect()
 
   await this.redis.pSubscribe(pattern, onMessage)
@@ -234,6 +237,9 @@ exports.redis_subscribe = async function (connection, onMessage) {
   }, 3 * 1000)
 
   connection.notes.redis = redis.createClient(this.redisCfg.pubsub)
+  connection.notes.redis.on('error', (err) => {
+    this.logerror(err.message)
+  })
   await connection.notes.redis.connect()
 
   clearTimeout(timer)
