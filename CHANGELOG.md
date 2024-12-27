@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### [2.0.8] - 2024-11-08
 
 - fix missing error handlers on pi-watch and pi-karma redis clients [#45](https://github.com/haraka/haraka-plugin-redis/issues/45)
+- fix no client QUIT on shutdown when it is not connected [#47]https://github.com/haraka/haraka-plugin-redis/pull/47
 
 ### [2.0.7] - 2024-04-21
 
