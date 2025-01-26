@@ -149,7 +149,7 @@ exports.init_redis_plugin = function (next, server) {
 exports.shutdown = function () {
   if (this.db) this.db.quit()
 
-  if (server && server.notes && server.notes.redis) {
+  if (server && server.notes && server.notes.redis && server.notes.redis.isOpen) {
     server.notes.redis.quit()
   }
 }
