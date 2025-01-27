@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-redis",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "description": "Redis plugin for Haraka & other plugins to inherit from",
   "main": "index.js",
   "files": [
@@ -13,16 +13,16 @@
     "redis": "^4.6.0"
   },
   "devDependencies": {
-    "@haraka/eslint-config": "^1.1.3",
+    "@haraka/eslint-config": "^2.0.2",
     "haraka-test-fixtures": "1.3.7"
   },
   "scripts": {
     "format": "npm run prettier:fix && npm run lint:fix",
-    "lint": "npx eslint@^8 *.js test",
-    "lint:fix": "npx eslint@^8 *.js test --fix",
+    "lint": "npx eslint@^9 *.js test",
+    "lint:fix": "npx eslint@^9 *.js test --fix",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
-    "test": "npx mocha@10",
+    "test": "npx mocha@11",
     "versions": "npx dependency-version-checker check",
     "versions:fix": "npx dependency-version-checker update && npm run prettier:fix"
   },
@@ -42,5 +42,9 @@
   "bugs": {
     "url": "https://github.com/haraka/haraka-plugin-redis/issues"
   },
-  "homepage": "https://github.com/haraka/haraka-plugin-redis#readme"
+  "homepage": "https://github.com/haraka/haraka-plugin-redis#readme",
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
+  }
 }
