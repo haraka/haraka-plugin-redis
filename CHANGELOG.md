@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.0.9] - 2025-01-26
+
+- dep(eslint): upgrade to v9
+
 ### [2.0.8] - 2024-11-08
 
 - fix missing error handlers on pi-watch and pi-karma redis clients [#45](https://github.com/haraka/haraka-plugin-redis/issues/45)
@@ -102,4 +106,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.0.4]: https://github.com/haraka/haraka-plugin-redis/releases/tag/2.0.4
 [2.0.5]: https://github.com/haraka/haraka-plugin-redis/releases/tag/2.0.5
 [2.0.6]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.6
-[2.0.7]: https://github.com/haraka/haraka-plugin-redis/releases/tag/2.0.7
+[2.0.7]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.7
+[2.0.8]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.8
