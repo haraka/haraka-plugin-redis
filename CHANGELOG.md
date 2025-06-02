@@ -4,14 +4,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.0.10] - 2025-06-02
+
+- dep(redis): upgrade to 5.1.1 (was 4.6.0)
+
 ### [2.0.9] - 2025-01-26
 
 - dep(eslint): upgrade to v9
 
 ### [2.0.8] - 2024-11-08
 
-- fix missing error handlers on pi-watch and pi-karma redis clients [#45](https://github.com/haraka/haraka-plugin-redis/issues/45)
-- fix no client QUIT on shutdown when it is not connected [#47]https://github.com/haraka/haraka-plugin-redis/pull/47
+- fix no client QUIT on shutdown when it is not connected #47
+- fix missing error handlers on pi-watch and pi-karma redis clients #46
 
 ### [2.0.7] - 2024-04-21
 
@@ -108,3 +112,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.0.6]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.6
 [2.0.7]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.7
 [2.0.8]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.8
+[2.0.10]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.10
