@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.0.11] - 2025-10-18
+
+- dep(redis): upgrade to 5.8.3
+
 ### [2.0.10] - 2025-06-02
 
 - dep(redis): upgrade to 5.1.1 (was 4.6.0)
@@ -113,3 +117,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.0.7]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.7
 [2.0.8]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.8
 [2.0.10]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.10
+[2.0.11]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.11
