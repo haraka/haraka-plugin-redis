@@ -122,20 +122,17 @@ describe('init_redis_plugin', function () {
     this.plugin.db.quit()
   })
 
-  it('connects to redis', function (done) {
-    this.plugin.init_redis_plugin(() => {
-      assert.ok(this.plugin.db?.server_info)
-      done()
-    }, this.server)
+  it('connects to redis', async function () {
+    await new Promise((resolve) => {
+      this.plugin.init_redis_plugin(() => {
+        assert.ok(this.plugin.db?.server_info)
+        resolve()
+      }, this.server)
+    })
   })
 
-  it('pings and gets PONG answer', function (done) {
-    this.plugin
-      .redis_ping()
-      .then((r) => {
-        assert.equal(r, true)
-        done()
-      })
-      .catch(done)
+  it('pings and gets PONG answer', async function () {
+    const r = await this.plugin.redis_ping()
+    assert.equal(r, true)
   })
 })
