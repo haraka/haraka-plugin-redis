@@ -10,11 +10,11 @@
     "test": "test"
   },
   "dependencies": {
-    "redis": "^5.8.3"
+    "redis": "^5.11.0"
   },
   "devDependencies": {
-    "@haraka/eslint-config": "^2.0.2",
-    "haraka-test-fixtures": "^1.3.10"
+    "@haraka/eslint-config": "^2.0.4",
+    "haraka-test-fixtures": "^1.4.0"
   },
   "scripts": {
     "format": "npm run prettier:fix && npm run lint:fix",
@@ -22,7 +22,9 @@
     "lint:fix": "npx eslint *.js test --fix",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
-    "test": "npx mocha",
+    "test": "node --test test/*.js",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-exclude=package.json --test-coverage-exclude=test/*.js test/*.js",
+    "test:coverage:lcov": "mkdir -p coverage && node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info test/*.js",
     "versions": "npx dependency-version-checker check",
     "versions:fix": "npx dependency-version-checker update && npm run prettier:fix"
   },

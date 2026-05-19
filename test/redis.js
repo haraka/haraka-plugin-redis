@@ -1,7 +1,8 @@
 'use strict'
 
-const assert = require('assert')
-const path = require('path')
+const assert = require('node:assert')
+const path = require('node:path')
+const { describe, it, before, after } = require('node:test')
 
 const fixtures = require('haraka-test-fixtures')
 
@@ -12,25 +13,27 @@ function retry(options) {
   return undefined
 }
 
-describe('config', function () {
-  before(async function () {
-    this.plugin = new fixtures.plugin('index')
-    this.plugin.config = this.plugin.config.module_config(path.resolve('test'))
+describe('config', () => {
+  let plugin
+
+  before(async () => {
+    plugin = new fixtures.plugin('index')
+    plugin.config = plugin.config.module_config(path.resolve('test'))
   })
 
-  it('loads', async function () {
-    assert.equal(this.plugin.name, 'index')
+  it('loads', async () => {
+    assert.equal(plugin.name, 'index')
   })
 
-  it('config defaults', async function () {
-    this.plugin.load_redis_ini()
-    assert.equal(this.plugin.redisCfg.server.socket.host, '127.0.0.1')
-    assert.equal(this.plugin.redisCfg.server.socket.port, 6379)
+  it('config defaults', async () => {
+    plugin.load_redis_ini()
+    assert.equal(plugin.redisCfg.server.socket.host, '127.0.0.1')
+    assert.equal(plugin.redisCfg.server.socket.port, 6379)
   })
 
-  it('merges [opts] into server config', async function () {
-    this.plugin.load_redis_ini()
-    assert.deepEqual(this.plugin.redisCfg, {
+  it('merges [opts] into server config', async () => {
+    plugin.load_redis_ini()
+    assert.deepEqual(plugin.redisCfg, {
       main: {},
       pubsub: {
         socket: {
@@ -52,11 +55,11 @@ describe('config', function () {
     })
   })
 
-  it('merges redis.ini [opts] into plugin config', async function () {
-    this.plugin.load_redis_ini()
-    this.plugin.cfg = {}
-    this.plugin.merge_redis_ini()
-    assert.deepEqual(this.plugin.cfg.redis, {
+  it('merges redis.ini [opts] into plugin config', async () => {
+    plugin.load_redis_ini()
+    plugin.cfg = {}
+    plugin.merge_redis_ini()
+    assert.deepEqual(plugin.cfg.redis, {
       socket: {
         host: '127.0.0.1',
         port: '6379',
@@ -67,21 +70,23 @@ describe('config', function () {
   })
 })
 
-describe('connects', function () {
-  before(async function () {
-    this.plugin = new fixtures.plugin('index')
-    this.plugin.register()
+describe('connects', () => {
+  let plugin
+
+  before(async () => {
+    plugin = new fixtures.plugin('index')
+    plugin.register()
   })
 
-  it('loads', async function () {
-    assert.equal(this.plugin.name, 'index')
+  it('loads', async () => {
+    assert.equal(plugin.name, 'index')
   })
 
-  it('connects', async function () {
-    const redis = await this.plugin.get_redis_client({
+  it('connects', async () => {
+    const redis = await plugin.get_redis_client({
       socket: {
-        host: this.plugin.redisCfg.server.host,
-        port: this.plugin.redisCfg.server.port,
+        host: plugin.redisCfg.server.host,
+        port: plugin.redisCfg.server.port,
       },
       retry_strategy: retry,
     })
@@ -89,19 +94,19 @@ describe('connects', function () {
     await redis.quit()
   })
 
-  it('populates plugin.cfg.redis when asked', async function () {
-    assert.equal(this.plugin.cfg, undefined)
-    this.plugin.merge_redis_ini()
-    assert.deepEqual(this.plugin.cfg.redis, {
+  it('populates plugin.cfg.redis when asked', async () => {
+    assert.equal(plugin.cfg, undefined)
+    plugin.merge_redis_ini()
+    assert.deepEqual(plugin.cfg.redis, {
       socket: { host: '127.0.0.1', port: '6379' },
     })
   })
 
-  it('connects to a different redis db', async function () {
-    this.plugin.merge_redis_ini()
-    this.plugin.cfg.redis.database = 2
-    this.plugin.cfg.redis.retry_strategy = retry
-    const client = await this.plugin.get_redis_client(this.plugin.cfg.redis)
+  it('connects to a different redis db', async () => {
+    plugin.merge_redis_ini()
+    plugin.cfg.redis.database = 2
+    plugin.cfg.redis.retry_strategy = retry
+    const client = await plugin.get_redis_client(plugin.cfg.redis)
     const res = await client.ping()
     assert.equal(res, 'PONG')
     assert.ok(client)
@@ -109,30 +114,33 @@ describe('connects', function () {
   })
 })
 
-describe('init_redis_plugin', function () {
-  before(function () {
-    this.server = { notes: {} }
+describe('init_redis_plugin', () => {
+  let plugin
+  let server
 
-    this.plugin = new fixtures.plugin('index')
-    this.plugin.register()
-    this.plugin.merge_redis_ini()
+  before(() => {
+    server = { notes: {} }
+
+    plugin = new fixtures.plugin('index')
+    plugin.register()
+    plugin.merge_redis_ini()
   })
 
-  after(function () {
-    this.plugin.db.quit()
+  after(() => {
+    plugin.db.quit()
   })
 
-  it('connects to redis', async function () {
+  it('connects to redis', async () => {
     await new Promise((resolve) => {
-      this.plugin.init_redis_plugin(() => {
-        assert.ok(this.plugin.db?.server_info)
+      plugin.init_redis_plugin(() => {
+        assert.ok(plugin.db?.server_info)
         resolve()
-      }, this.server)
+      }, server)
     })
   })
 
-  it('pings and gets PONG answer', async function () {
-    const r = await this.plugin.redis_ping()
+  it('pings and gets PONG answer', async () => {
+    const r = await plugin.redis_ping()
     assert.equal(r, true)
   })
 })

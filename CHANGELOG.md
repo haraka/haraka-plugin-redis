@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+- change: test runner is now node:test
+
 ### [2.0.11] - 2025-10-18
 
 - dep(redis): upgrade to 5.8.3
