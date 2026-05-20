@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.1.0] - 2026-05-20
+
 - fix: catch errors in redis_unsubscribe
   - prevents crash when Redis is unreachable during conn teardown
 - fix: redis_unsubscribe uses pUnsubscribe (v4 syntax)
@@ -11,7 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   - uses arrow-style logging so the `this` binding survives ping failures
 - fix: init_redis_plugin compares cfg DB against redisCfg.server.database
 - fix: get_redis_client rejects on connect failure, so callers no longer fail open
-- change: test runner is now node:test
+- remove unnecessary done callbacks in synchronous tests (#52)
+- change: test runner is now node:test (#53)
 
 ### [2.0.11] - 2025-10-18
 
@@ -127,3 +130,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.0.8]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.8
 [2.0.10]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.10
 [2.0.11]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.11
+[2.1.0]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.1.0

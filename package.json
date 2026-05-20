@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-redis",
-  "version": "2.0.11",
+  "version": "2.1.0",
   "description": "Redis plugin for Haraka & other plugins to inherit from",
   "main": "index.js",
   "files": [
@@ -10,7 +10,7 @@
     "test": "test"
   },
   "dependencies": {
-    "redis": "^5.11.0"
+    "redis": "^5.12.1"
   },
   "devDependencies": {
     "@haraka/eslint-config": "^2.0.4",
@@ -25,8 +25,8 @@
     "test": "node --test test/*.js",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-exclude=package.json --test-coverage-exclude=test/*.js test/*.js",
     "test:coverage:lcov": "mkdir -p coverage && node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info test/*.js",
-    "versions": "npx dependency-version-checker check",
-    "versions:fix": "npx dependency-version-checker update && npm run prettier:fix"
+    "versions": "npx npm-dep-mgr check",
+    "versions:fix": "npx npm-dep-mgr update"
   },
   "repository": {
     "type": "git",
