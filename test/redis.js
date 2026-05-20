@@ -144,3 +144,278 @@ describe('init_redis_plugin', () => {
     assert.equal(r, true)
   })
 })
+
+describe('get_redis_client dbid', () => {
+  let plugin
+
+  before(() => {
+    plugin = new fixtures.plugin('index')
+    plugin.register()
+    plugin.merge_redis_ini()
+  })
+
+  it('assigns opts.database to client.dbid', async () => {
+    const client = await plugin.get_redis_client({
+      ...plugin.cfg.redis,
+      database: 3,
+    })
+    try {
+      assert.equal(client.dbid, 3)
+    } finally {
+      await client.quit()
+    }
+  })
+
+  it('leaves dbid unset when opts.database is omitted', async () => {
+    const client = await plugin.get_redis_client(plugin.cfg.redis)
+    try {
+      assert.equal(client.dbid, undefined)
+    } finally {
+      await client.quit()
+    }
+  })
+})
+
+// regression: get_redis_client used to swallow connect errors and return
+// undefined, leaving callers with an undefined client. It must reject now.
+describe('get_redis_client error propagation', () => {
+  it('rejects when the server is unreachable', async () => {
+    const plugin = new fixtures.plugin('index')
+    plugin.register()
+
+    await assert.rejects(
+      plugin.get_redis_client({
+        socket: {
+          host: '127.0.0.1',
+          port: 1,
+          reconnectStrategy: false,
+          connectTimeout: 500,
+        },
+      }),
+    )
+  })
+})
+
+// regression: init_redis_plugin compared pidb against plugin.redisCfg.db
+// (always undefined post-load) instead of redisCfg.server.database (the DB
+// the shared client is actually on), so the reuse branch never fired when a
+// plugin explicitly requested the same DB as the shared client.
+describe('init_redis_plugin shared-client reuse', () => {
+  let plugin
+  let server
+
+  before(() => {
+    plugin = new fixtures.plugin('index')
+    plugin.register()
+    // pin the shared client to DB 0 and have the plugin request the same DB
+    // explicitly, so the comparison's second clause is what decides reuse.
+    plugin.redisCfg.server.database = 0
+    plugin.merge_redis_ini()
+    plugin.cfg.redis.database = 0
+    server = { notes: {}, loginfo: () => {} }
+  })
+
+  after(async () => {
+    if (plugin.db && plugin.db !== server.notes.redis) await plugin.db.quit()
+    if (server.notes.redis) await server.notes.redis.quit()
+  })
+
+  it('reuses server.notes.redis when pidb matches the shared DB', async () => {
+    await new Promise((resolve) => {
+      plugin.init_redis_shared(resolve, server)
+    })
+    assert.ok(server.notes.redis, 'shared client established')
+
+    await new Promise((resolve) => {
+      plugin.init_redis_plugin(resolve, server)
+    })
+    assert.equal(plugin.db, server.notes.redis)
+  })
+})
+
+// regression: init_redis_shared used to call ping() with a callback, but
+// node-redis v4+ ping is promise-based — the callback never fired and the
+// re-entrant path (init_child after init_master) hung indefinitely.
+describe('load_redis_ini legacy compat', () => {
+  function pluginWithRawCfg(raw) {
+    const plugin = new fixtures.plugin('index')
+    plugin.config = { get: () => raw }
+    plugin.load_redis_ini()
+    return plugin
+  }
+
+  it('rewrites server.ip → server.host', () => {
+    const plugin = pluginWithRawCfg({ server: { ip: '10.0.0.5' } })
+    assert.equal(plugin.redisCfg.server.socket.host, '10.0.0.5')
+    assert.equal(plugin.redisCfg.server.ip, undefined)
+  })
+
+  it('rewrites top-level db → database', () => {
+    const plugin = pluginWithRawCfg({ db: 3 })
+    assert.equal(plugin.redisCfg.database, 3)
+    assert.equal(plugin.redisCfg.db, undefined)
+  })
+
+  it('keeps explicit database when both db and database are set', () => {
+    const plugin = pluginWithRawCfg({ db: 3, database: 7 })
+    assert.equal(plugin.redisCfg.database, 7)
+    // legacy db is left in place; only the rename branch deletes it
+    assert.equal(plugin.redisCfg.db, 3)
+  })
+
+  it('promotes top-level socket opts on server into server.socket', () => {
+    const plugin = pluginWithRawCfg({
+      server: {
+        host: '10.0.0.5',
+        port: 6380,
+        connectTimeout: 1234,
+        keepAlive: 1,
+      },
+    })
+    assert.equal(plugin.redisCfg.server.socket.host, '10.0.0.5')
+    assert.equal(plugin.redisCfg.server.socket.port, 6380)
+    assert.equal(plugin.redisCfg.server.socket.connectTimeout, 1234)
+    assert.equal(plugin.redisCfg.server.socket.keepAlive, 1)
+    assert.equal(plugin.redisCfg.server.host, undefined)
+    assert.equal(plugin.redisCfg.server.connectTimeout, undefined)
+  })
+
+  it('promotes top-level socket opts on pubsub into pubsub.socket', () => {
+    const plugin = pluginWithRawCfg({
+      pubsub: { host: '10.0.0.6', port: 6381 },
+    })
+    assert.equal(plugin.redisCfg.pubsub.socket.host, '10.0.0.6')
+    assert.equal(plugin.redisCfg.pubsub.socket.port, 6381)
+    assert.equal(plugin.redisCfg.pubsub.host, undefined)
+  })
+})
+
+describe('redis_ping error paths', () => {
+  it('throws when this.db is not set', async () => {
+    const plugin = new fixtures.plugin('index')
+    plugin.register()
+    await assert.rejects(plugin.redis_ping(), /redis not initialized/)
+    assert.equal(plugin.redis_pings, false)
+  })
+
+  it('throws when ping reply is not PONG', async () => {
+    const plugin = new fixtures.plugin('index')
+    plugin.register()
+    plugin.db = { ping: async () => 'NOT PONG' }
+    await assert.rejects(plugin.redis_ping(), /not PONG/)
+    assert.equal(plugin.redis_pings, false)
+  })
+})
+
+// regression: redis_unsubscribe used unsubscribe() for a pattern subscription
+// established with pSubscribe(). With the bug, the PUNSUBSCRIBE command was
+// never sent — the pattern stayed bound (the immediate quit() masked it in
+// production). This test stubs quit() so we can confirm the pattern is
+// actually unbound after redis_unsubscribe returns.
+describe('redis_unsubscribe uses pUnsubscribe', () => {
+  it('stops receiving messages on the pattern after unsubscribe', async () => {
+    const plugin = new fixtures.plugin('index')
+    plugin.register()
+    plugin.merge_redis_ini()
+
+    const publisher = await plugin.get_redis_client(plugin.cfg.redis)
+
+    const conn = {
+      uuid: `test-uuid-${Date.now()}-${Math.random()}`,
+      notes: {},
+      logdebug: () => {},
+      logerror: () => {},
+    }
+    const messages = []
+    let realQuit
+    try {
+      await plugin.redis_subscribe(conn, (msg) => messages.push(msg))
+
+      // redis_subscribe doesn't await pSubscribe; give it a beat to register
+      await new Promise((r) => setTimeout(r, 100))
+
+      await publisher.publish(`result-${conn.uuid}`, 'first')
+      await new Promise((r) => setTimeout(r, 100))
+      assert.deepEqual(messages, ['first'], 'first publish received')
+
+      // prevent redis_unsubscribe from closing the connection so we can verify
+      // the pattern is actually unbound (not just the socket gone)
+      realQuit = conn.notes.redis.quit.bind(conn.notes.redis)
+      conn.notes.redis.quit = async () => {}
+
+      await plugin.redis_unsubscribe(conn)
+
+      await publisher.publish(`result-${conn.uuid}`, 'second')
+      await new Promise((r) => setTimeout(r, 100))
+      assert.deepEqual(messages, ['first'], 'second publish must NOT arrive')
+    } finally {
+      if (realQuit) await realQuit().catch(() => {})
+      else if (conn.notes.redis) await conn.notes.redis.quit().catch(() => {})
+      await publisher.quit().catch(() => {})
+    }
+  })
+})
+
+// regression for C2 on the shared init hook: a connect failure must still
+// resolve init (next() fires) and must NOT assign undefined onto
+// server.notes.redis, so plugins that gate on `if (server.notes.redis)`
+// correctly skip the redis path.
+describe('init_redis_shared connect failure', () => {
+  it('calls next() and leaves server.notes.redis unset', async () => {
+    const plugin = new fixtures.plugin('index')
+    plugin.register()
+    plugin.redisCfg.server = {
+      socket: {
+        host: '127.0.0.1',
+        port: 1,
+        reconnectStrategy: false,
+        connectTimeout: 500,
+      },
+    }
+    const server = { notes: {} }
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error('init_redis_shared did not call next()')),
+        3000,
+      )
+      plugin.init_redis_shared(() => {
+        clearTimeout(timer)
+        resolve()
+      }, server)
+    })
+    assert.equal(server.notes.redis, undefined)
+  })
+})
+
+describe('init_redis_shared re-entrant ping path', () => {
+  let plugin
+  let server
+
+  before(() => {
+    plugin = new fixtures.plugin('index')
+    plugin.register()
+    server = { notes: {} }
+  })
+
+  after(async () => {
+    if (server.notes.redis) await server.notes.redis.quit()
+  })
+
+  it('completes when server.notes.redis already exists', async () => {
+    // first call establishes server.notes.redis
+    await new Promise((resolve) => plugin.init_redis_shared(resolve, server))
+    assert.ok(server.notes.redis)
+
+    // second call exercises the ping path and must call next()
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error('init_redis_shared hung on ping path')),
+        2000,
+      )
+      plugin.init_redis_shared(() => {
+        clearTimeout(timer)
+        resolve()
+      }, server)
+    })
+  })
+})

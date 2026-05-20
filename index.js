@@ -27,42 +27,39 @@ const socketOpts = [
 ]
 
 exports.load_redis_ini = function () {
-  const plugin = this
-
   // store redis cfg at redisCfg, to avoid conflicting with plugins that
   // inherit this plugin and have *their* config at plugin.cfg
-  plugin.redisCfg = plugin.config.get('redis.ini', () => {
-    plugin.load_redis_ini()
+  this.redisCfg = this.config.get('redis.ini', () => {
+    this.load_redis_ini()
   })
 
   // backwards compat
-  if (plugin.redisCfg?.server?.ip && !plugin.redisCfg?.server?.host) {
-    plugin.redisCfg.server.host = plugin.redisCfg.server.ip
-    delete plugin.redisCfg.server.ip
+  if (this.redisCfg?.server?.ip && !this.redisCfg?.server?.host) {
+    this.redisCfg.server.host = this.redisCfg.server.ip
+    delete this.redisCfg.server.ip
   }
-  if (plugin.redisCfg.db && !plugin.redisCfg.database) {
-    plugin.redisCfg.database = plugin.redisCfg.db
-    delete plugin.redisCfg.db
+  if (this.redisCfg.db && !this.redisCfg.database) {
+    this.redisCfg.database = this.redisCfg.db
+    delete this.redisCfg.db
   }
 
-  plugin.redisCfg.server = {
+  this.redisCfg.server = {
     ...defaultOpts,
-    ...plugin.redisCfg.opts,
-    ...plugin.redisCfg.server,
+    ...this.redisCfg.opts,
+    ...this.redisCfg.server,
   }
-  plugin.redisCfg.pubsub = {
+  this.redisCfg.pubsub = {
     ...defaultOpts,
-    ...plugin.redisCfg.opts,
-    ...plugin.redisCfg.pubsub,
+    ...this.redisCfg.opts,
+    ...this.redisCfg.pubsub,
   }
 
   // socket options. In redis < 4, the options like host and port were
   // top level, now they're in socket.*. Permit legacy configs to still work
   for (const s of ['server', 'pubsub']) {
     for (const o of socketOpts) {
-      if (plugin.redisCfg[s][o])
-        plugin.redisCfg[s].socket[o] = plugin.redisCfg[s][o]
-      delete plugin.redisCfg[s][o]
+      if (this.redisCfg[s][o]) this.redisCfg[s].socket[o] = this.redisCfg[s][o]
+      delete this.redisCfg[s][o]
     }
   }
 }
@@ -86,70 +83,55 @@ exports.merge_redis_ini = function () {
   }
 }
 
-exports.init_redis_shared = function (next, server) {
-  let calledNext = false
-  function nextOnce(e) {
-    if (e) this.logerror(`Redis error: ${e.message}`)
-    if (calledNext) return
-    calledNext = true
-    next()
-  }
-
-  // this is the server-wide redis, shared by plugins that don't
-  // specify a db ID.
+exports.init_redis_shared = async function (next, server) {
+  // server-wide redis, shared by plugins that don't specify a db ID.
   if (!server.notes.redis) {
-    this.get_redis_client(this.redisCfg.server).then((client) => {
-      server.notes.redis = client
-      nextOnce()
-    })
-    return
+    try {
+      server.notes.redis = await this.get_redis_client(this.redisCfg.server)
+    } catch (e) {
+      this.logerror(`Redis error: ${e.message}`)
+    }
+    return next()
   }
 
-  server.notes.redis.ping((err) => {
-    if (err) return nextOnce(err)
-
+  try {
+    await server.notes.redis.ping()
     this.loginfo('already connected')
-    nextOnce() // connection is good
-  })
+  } catch (e) {
+    this.logerror(`Redis error: ${e.message}`)
+  }
+  next()
 }
 
-exports.init_redis_plugin = function (next, server) {
-  const plugin = this
-
+exports.init_redis_plugin = async function (next, server) {
   // this function is called by plugins at init_*, to establish their
   // shared or unique redis db handle.
 
-  let calledNext = false
-  function nextOnce() {
-    if (calledNext) return
-    calledNext = true
-    next()
-  }
-
   // for tests that do not load a shared config
-  if (!plugin.cfg) {
-    plugin.cfg = { redis: {} }
-    if (plugin.redisCfg)
-      plugin.cfg.redis = JSON.parse(JSON.stringify(plugin.redisCfg))
+  if (!this.cfg) {
+    this.cfg = { redis: {} }
+    if (this.redisCfg)
+      this.cfg.redis = JSON.parse(JSON.stringify(this.redisCfg))
   }
   if (!server) server = { notes: {} }
 
-  const pidb = plugin.cfg.redis.database
+  const pidb = this.cfg.redis.database
   if (server.notes.redis) {
     // server-wide redis is available
     // and the DB not specified or is the same as server-wide
-    if (pidb === undefined || pidb === plugin.redisCfg.db) {
-      server.loginfo(plugin, 'using server.notes.redis')
-      plugin.db = server.notes.redis
-      nextOnce()
-      return
+    if (pidb === undefined || pidb === this.redisCfg.server.database) {
+      server.loginfo(this, 'using server.notes.redis')
+      this.db = server.notes.redis
+      return next()
     }
   }
 
-  plugin.get_redis_client(plugin.cfg.redis).then((client) => {
-    plugin.db = client
-    nextOnce()
-  })
+  try {
+    this.db = await this.get_redis_client(this.cfg.redis)
+  } catch (e) {
+    this.logerror(`Redis error: ${e.message}`)
+  }
+  next()
 }
 
 exports.shutdown = function () {
@@ -209,8 +191,8 @@ exports.get_redis_client = async function (opts) {
 
     return client
   } catch (e) {
-    console.error(e)
-    this.logerror(e)
+    this.logerror(`Redis connect failed: ${e.message}`)
+    throw e
   }
 }
 
@@ -267,7 +249,11 @@ exports.redis_unsubscribe = async function (connection) {
   }
 
   const pattern = this.get_redis_sub_channel(connection)
-  await connection.notes.redis.unsubscribe(pattern)
-  connection.logdebug(this, `unsubsubscribed from ${pattern}`)
+  try {
+    await connection.notes.redis.pUnsubscribe(pattern)
+    connection.logdebug(this, `unsubsubscribed from ${pattern}`)
+  } catch (err) {
+    connection.logerror(this, `redis_unsubscribe error: ${err.message}`)
+  }
   connection.notes.redis.quit()
 }

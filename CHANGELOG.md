@@ -4,6 +4,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+- fix: catch errors in redis_unsubscribe
+  - prevents crash when Redis is unreachable during conn teardown
+- fix: redis_unsubscribe uses pUnsubscribe (v4 syntax)
+- fix: init_redis_shared awaits ping (node-redis v4+ is promise-based)
+  - uses arrow-style logging so the `this` binding survives ping failures
+- fix: init_redis_plugin compares cfg DB against redisCfg.server.database
+- fix: get_redis_client rejects on connect failure, so callers no longer fail open
 - change: test runner is now node:test
 
 ### [2.0.11] - 2025-10-18

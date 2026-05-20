@@ -79,7 +79,7 @@ exports.register = function () {
   // populate plugin.cfg.redis with defaults from redis.ini
   this.merge_redis_ini()
 
-  // cluster aware redis connection(s)
+  // register per-plugin redis connection on master and child workers
   this.register_hook('init_master', 'init_redis_plugin')
   this.register_hook('init_child', 'init_redis_plugin')
 }
