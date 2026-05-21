@@ -6,6 +6,8 @@ const { describe, it, before, after } = require('node:test')
 
 const fixtures = require('haraka-test-fixtures')
 
+const { normalize_redis_ini } = require('../index')
+
 function retry(options) {
   if (options.error) {
     console.error(options.error)
@@ -233,38 +235,28 @@ describe('init_redis_plugin shared-client reuse', () => {
   })
 })
 
-// regression: init_redis_shared used to call ping() with a callback, but
-// node-redis v4+ ping is promise-based — the callback never fired and the
-// re-entrant path (init_child after init_master) hung indefinitely.
-describe('load_redis_ini legacy compat', () => {
-  function pluginWithRawCfg(raw) {
-    const plugin = new fixtures.plugin('index')
-    plugin.config = { get: () => raw }
-    plugin.load_redis_ini()
-    return plugin
-  }
-
+describe('normalize_redis_ini legacy compat', () => {
   it('rewrites server.ip → server.host', () => {
-    const plugin = pluginWithRawCfg({ server: { ip: '10.0.0.5' } })
-    assert.equal(plugin.redisCfg.server.socket.host, '10.0.0.5')
-    assert.equal(plugin.redisCfg.server.ip, undefined)
+    const cfg = normalize_redis_ini({ server: { ip: '10.0.0.5' } })
+    assert.equal(cfg.server.socket.host, '10.0.0.5')
+    assert.equal(cfg.server.ip, undefined)
   })
 
   it('rewrites top-level db → database', () => {
-    const plugin = pluginWithRawCfg({ db: 3 })
-    assert.equal(plugin.redisCfg.database, 3)
-    assert.equal(plugin.redisCfg.db, undefined)
+    const cfg = normalize_redis_ini({ db: 3 })
+    assert.equal(cfg.database, 3)
+    assert.equal(cfg.db, undefined)
   })
 
   it('keeps explicit database when both db and database are set', () => {
-    const plugin = pluginWithRawCfg({ db: 3, database: 7 })
-    assert.equal(plugin.redisCfg.database, 7)
-    // legacy db is left in place; only the rename branch deletes it
-    assert.equal(plugin.redisCfg.db, 3)
+    const cfg = normalize_redis_ini({ db: 3, database: 7 })
+    assert.equal(cfg.database, 7)
+    // legacy db is left in place when database is also set
+    assert.equal(cfg.db, 3)
   })
 
   it('promotes top-level socket opts on server into server.socket', () => {
-    const plugin = pluginWithRawCfg({
+    const cfg = normalize_redis_ini({
       server: {
         host: '10.0.0.5',
         port: 6380,
@@ -272,21 +264,49 @@ describe('load_redis_ini legacy compat', () => {
         keepAlive: 1,
       },
     })
-    assert.equal(plugin.redisCfg.server.socket.host, '10.0.0.5')
-    assert.equal(plugin.redisCfg.server.socket.port, 6380)
-    assert.equal(plugin.redisCfg.server.socket.connectTimeout, 1234)
-    assert.equal(plugin.redisCfg.server.socket.keepAlive, 1)
-    assert.equal(plugin.redisCfg.server.host, undefined)
-    assert.equal(plugin.redisCfg.server.connectTimeout, undefined)
+    assert.equal(cfg.server.socket.host, '10.0.0.5')
+    assert.equal(cfg.server.socket.port, 6380)
+    assert.equal(cfg.server.socket.connectTimeout, 1234)
+    assert.equal(cfg.server.socket.keepAlive, 1)
+    assert.equal(cfg.server.host, undefined)
+    assert.equal(cfg.server.connectTimeout, undefined)
   })
 
   it('promotes top-level socket opts on pubsub into pubsub.socket', () => {
-    const plugin = pluginWithRawCfg({
+    const cfg = normalize_redis_ini({
       pubsub: { host: '10.0.0.6', port: 6381 },
     })
-    assert.equal(plugin.redisCfg.pubsub.socket.host, '10.0.0.6')
-    assert.equal(plugin.redisCfg.pubsub.socket.port, 6381)
-    assert.equal(plugin.redisCfg.pubsub.host, undefined)
+    assert.equal(cfg.pubsub.socket.host, '10.0.0.6')
+    assert.equal(cfg.pubsub.socket.port, 6381)
+    assert.equal(cfg.pubsub.host, undefined)
+  })
+
+  // regression: defaultOpts.socket used to be a shared sub-object at module
+  // scope, so promoting a top-level host/port into one result's .socket also
+  // poisoned the defaults for every subsequent call.
+  it('does not share .socket references between successive calls', () => {
+    normalize_redis_ini({ pubsub: { host: '10.0.0.99', port: 6399 } })
+    const cfg = normalize_redis_ini({})
+    assert.equal(cfg.server.socket.host, '127.0.0.1')
+    assert.equal(cfg.server.socket.port, '6379')
+    assert.equal(cfg.pubsub.socket.host, '127.0.0.1')
+    assert.equal(cfg.pubsub.socket.port, '6379')
+  })
+
+  it('keeps server.socket and pubsub.socket independent within one call', () => {
+    const cfg = normalize_redis_ini({
+      pubsub: { host: '10.0.0.6', port: 6381 },
+    })
+    assert.notStrictEqual(cfg.server.socket, cfg.pubsub.socket)
+    assert.equal(cfg.server.socket.host, '127.0.0.1')
+    assert.equal(cfg.server.socket.port, '6379')
+  })
+
+  it('does not mutate its input', () => {
+    const raw = { server: { ip: '10.0.0.5' }, pubsub: { host: '10.0.0.6' } }
+    const snapshot = JSON.parse(JSON.stringify(raw))
+    normalize_redis_ini(raw)
+    assert.deepEqual(raw, snapshot)
   })
 })
 

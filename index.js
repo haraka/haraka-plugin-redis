@@ -14,7 +14,7 @@ exports.register = function () {
   this.register_hook('init_child', 'init_redis_shared')
 }
 
-const defaultOpts = { socket: { host: '127.0.0.1', port: '6379' } }
+const DEFAULT_SOCKET = Object.freeze({ host: '127.0.0.1', port: '6379' })
 const socketOpts = [
   'host',
   'port',
@@ -26,42 +26,52 @@ const socketOpts = [
   'reconnectStrategy',
 ]
 
+// Normalize one endpoint section (server, pubsub, or a merged plugin [redis]).
+// Pure: returns a fresh object. Promotes legacy top-level fields into .socket.
+function normalize_endpoint(section = {}, opts = {}) {
+  const merged = { ...opts, ...section }
+  const socket = { ...DEFAULT_SOCKET, ...merged.socket }
+
+  if (merged.ip && !merged.host) merged.host = merged.ip // legacy: ip → host
+  delete merged.ip
+
+  const rest = {}
+  for (const [k, v] of Object.entries(merged)) {
+    if (k === 'socket') continue
+    if (socketOpts.includes(k)) {
+      if (v != null && v !== '') socket[k] = v
+    } else {
+      rest[k] = v
+    }
+  }
+  return { ...rest, socket }
+}
+
+// Normalize the whole redis.ini blob. Pure: returns a fresh object so the
+// caller cannot accidentally mutate haraka-config's cached value.
+function normalize_redis_ini(raw = {}) {
+  const out = {
+    main: { ...raw.main },
+    opts: { ...raw.opts },
+    server: normalize_endpoint(raw.server, raw.opts),
+    pubsub: normalize_endpoint(raw.pubsub, raw.opts),
+  }
+  // legacy: top-level db → database. Keep both when both are set.
+  if (raw.database !== undefined) out.database = raw.database
+  else if (raw.db !== undefined) out.database = raw.db
+  if (raw.db !== undefined && raw.database !== undefined) out.db = raw.db
+  return out
+}
+
+exports.normalize_redis_ini = normalize_redis_ini
+exports.normalize_endpoint = normalize_endpoint
+
 exports.load_redis_ini = function () {
   // store redis cfg at redisCfg, to avoid conflicting with plugins that
   // inherit this plugin and have *their* config at plugin.cfg
-  this.redisCfg = this.config.get('redis.ini', () => {
-    this.load_redis_ini()
-  })
-
-  // backwards compat
-  if (this.redisCfg?.server?.ip && !this.redisCfg?.server?.host) {
-    this.redisCfg.server.host = this.redisCfg.server.ip
-    delete this.redisCfg.server.ip
-  }
-  if (this.redisCfg.db && !this.redisCfg.database) {
-    this.redisCfg.database = this.redisCfg.db
-    delete this.redisCfg.db
-  }
-
-  this.redisCfg.server = {
-    ...defaultOpts,
-    ...this.redisCfg.opts,
-    ...this.redisCfg.server,
-  }
-  this.redisCfg.pubsub = {
-    ...defaultOpts,
-    ...this.redisCfg.opts,
-    ...this.redisCfg.pubsub,
-  }
-
-  // socket options. In redis < 4, the options like host and port were
-  // top level, now they're in socket.*. Permit legacy configs to still work
-  for (const s of ['server', 'pubsub']) {
-    for (const o of socketOpts) {
-      if (this.redisCfg[s][o]) this.redisCfg[s].socket[o] = this.redisCfg[s][o]
-      delete this.redisCfg[s][o]
-    }
-  }
+  this.redisCfg = normalize_redis_ini(
+    this.config.get('redis.ini', () => this.load_redis_ini()),
+  )
 }
 
 exports.merge_redis_ini = function () {
@@ -69,14 +79,11 @@ exports.merge_redis_ini = function () {
   if (!this.cfg.redis) this.cfg.redis = {} // no [redis] in <plugin>.ini file
   if (!this.redisCfg) this.load_redis_ini()
 
-  this.cfg.redis = Object.assign({}, this.redisCfg.server, this.cfg.redis)
+  this.cfg.redis = normalize_endpoint({
+    ...this.redisCfg.server,
+    ...this.cfg.redis,
+  })
 
-  // backwards compatibility
-  for (const o of socketOpts) {
-    if (this.cfg.redis[o] === undefined) continue
-    this.cfg.redis.socket[o] = this.cfg.redis[o]
-    delete this.cfg.redis[o]
-  }
   if (this.cfg.redis.db && !this.cfg.redis.database) {
     this.cfg.redis.database = this.cfg.redis.db
     delete this.cfg.redis.db

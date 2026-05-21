@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2.1.0] - 2026-05-20
 
+- refactor: extract `normalize_redis_ini` / `normalize_endpoint` as helpers
+  - load/merge no longer mutates haraka-config's cached object
+- fix: defaultOpts.socket is no longer shared across plugin instances
 - fix: catch errors in redis_unsubscribe
   - prevents crash when Redis is unreachable during conn teardown
 - fix: redis_unsubscribe uses pUnsubscribe (v4 syntax)
