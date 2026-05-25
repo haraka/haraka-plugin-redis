@@ -258,9 +258,10 @@ exports.redis_unsubscribe = async function (connection) {
   const pattern = this.get_redis_sub_channel(connection)
   try {
     await connection.notes.redis.pUnsubscribe(pattern)
-    connection.logdebug(this, `unsubsubscribed from ${pattern}`)
+    connection.logdebug(this, `unsubscribed from ${pattern}`)
+    await connection.notes.redis.quit()
   } catch (err) {
     connection.logerror(this, `redis_unsubscribe error: ${err.message}`)
   }
-  connection.notes.redis.quit()
+  connection.notes.redis = null
 }
