@@ -4,7 +4,7 @@ const assert = require('node:assert')
 const path = require('node:path')
 const { describe, it, before, after } = require('node:test')
 
-const fixtures = require('haraka-test-fixtures')
+const { makePlugin } = require('haraka-test-fixtures')
 
 const { normalize_redis_ini } = require('../index')
 
@@ -19,8 +19,10 @@ describe('config', () => {
   let plugin
 
   before(async () => {
-    plugin = new fixtures.plugin('index')
-    plugin.config = plugin.config.module_config(path.resolve('test'))
+    plugin = makePlugin('index', {
+      configDir: path.resolve('test'),
+      register: false,
+    })
   })
 
   it('loads', async () => {
@@ -76,7 +78,7 @@ describe('connects', () => {
   let plugin
 
   before(async () => {
-    plugin = new fixtures.plugin('index')
+    plugin = makePlugin('index', { register: false })
     plugin.register()
   })
 
@@ -123,7 +125,7 @@ describe('init_redis_plugin', () => {
   before(() => {
     server = { notes: {} }
 
-    plugin = new fixtures.plugin('index')
+    plugin = makePlugin('index', { register: false })
     plugin.register()
     plugin.merge_redis_ini()
   })
@@ -151,7 +153,7 @@ describe('get_redis_client dbid', () => {
   let plugin
 
   before(() => {
-    plugin = new fixtures.plugin('index')
+    plugin = makePlugin('index', { register: false })
     plugin.register()
     plugin.merge_redis_ini()
   })
@@ -182,7 +184,7 @@ describe('get_redis_client dbid', () => {
 // undefined, leaving callers with an undefined client. It must reject now.
 describe('get_redis_client error propagation', () => {
   it('rejects when the server is unreachable', async () => {
-    const plugin = new fixtures.plugin('index')
+    const plugin = makePlugin('index', { register: false })
     plugin.register()
 
     await assert.rejects(
@@ -207,7 +209,7 @@ describe('init_redis_plugin shared-client reuse', () => {
   let server
 
   before(() => {
-    plugin = new fixtures.plugin('index')
+    plugin = makePlugin('index', { register: false })
     plugin.register()
     // pin the shared client to DB 0 and have the plugin request the same DB
     // explicitly, so the comparison's second clause is what decides reuse.
@@ -312,14 +314,14 @@ describe('normalize_redis_ini legacy compat', () => {
 
 describe('redis_ping error paths', () => {
   it('throws when this.db is not set', async () => {
-    const plugin = new fixtures.plugin('index')
+    const plugin = makePlugin('index', { register: false })
     plugin.register()
     await assert.rejects(plugin.redis_ping(), /redis not initialized/)
     assert.equal(plugin.redis_pings, false)
   })
 
   it('throws when ping reply is not PONG', async () => {
-    const plugin = new fixtures.plugin('index')
+    const plugin = makePlugin('index', { register: false })
     plugin.register()
     plugin.db = { ping: async () => 'NOT PONG' }
     await assert.rejects(plugin.redis_ping(), /not PONG/)
@@ -334,7 +336,7 @@ describe('redis_ping error paths', () => {
 // actually unbound after redis_unsubscribe returns.
 describe('redis_unsubscribe uses pUnsubscribe', () => {
   it('stops receiving messages on the pattern after unsubscribe', async () => {
-    const plugin = new fixtures.plugin('index')
+    const plugin = makePlugin('index', { register: false })
     plugin.register()
     plugin.merge_redis_ini()
 
@@ -382,7 +384,7 @@ describe('redis_unsubscribe uses pUnsubscribe', () => {
 // correctly skip the redis path.
 describe('init_redis_shared connect failure', () => {
   it('calls next() and leaves server.notes.redis unset', async () => {
-    const plugin = new fixtures.plugin('index')
+    const plugin = makePlugin('index', { register: false })
     plugin.register()
     plugin.redisCfg.server = {
       socket: {
@@ -412,7 +414,7 @@ describe('init_redis_shared re-entrant ping path', () => {
   let server
 
   before(() => {
-    plugin = new fixtures.plugin('index')
+    plugin = makePlugin('index', { register: false })
     plugin.register()
     server = { notes: {} }
   })

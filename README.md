@@ -1,7 +1,6 @@
 # haraka-plugin-redis
 
-[![Build Status][ci-img]][ci-url]
-[![Code Climate][clim-img]][clim-url]
+[![Test][ci-img]][ci-url] [![Cover][cov-img]][cov-url] [![Qlty][qlty-img]][qlty-url]
 
 Connects to a redis instance. By default it stores a `redis` connection handle at `server.notes.redis`. See below to get a custom DB handle attached to another database.
 
@@ -97,7 +96,11 @@ When a db ID is specified in the [redis] section of a redis inheriting plugin, l
 Notice the database ID numbers appended to each plugins redis connection
 message.
 
+<!-- leave these buried at the bottom of the document -->
+
 [ci-img]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci.yml/badge.svg
 [ci-url]: https://github.com/haraka/haraka-plugin-redis/actions/workflows/ci.yml
-[clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-redis/badges/gpa.svg
-[clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-redis
+[cov-img]: https://codecov.io/github/haraka/haraka-plugin-redis/coverage.svg
+[cov-url]: https://codecov.io/github/haraka/haraka-plugin-redis
+[qlty-img]: https://qlty.sh/gh/haraka/projects/haraka-plugin-redis/maintainability.svg
+[qlty-url]: https://qlty.sh/gh/haraka/projects/haraka-plugin-redis
