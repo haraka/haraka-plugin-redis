@@ -7,10 +7,10 @@
     "config"
   ],
   "dependencies": {
-    "redis": "^5.12.1"
+    "redis": "^6.0.0"
   },
   "devDependencies": {
-    "@haraka/eslint-config": "^2.0.4",
+    "@haraka/eslint-config": "^3.0.0",
     "haraka-test-fixtures": "^1.7.0"
   },
   "scripts": {
