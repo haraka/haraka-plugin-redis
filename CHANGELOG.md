@@ -4,6 +4,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+- dep(redis): upgrade to v6
 - test: refactored against test-fixtures 1.7.0
 
 ### [2.1.0] - 2026-05-20

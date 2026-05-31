@@ -1,7 +1,6 @@
 'use strict'
 
 const assert = require('node:assert')
-const path = require('node:path')
 const { describe, it, before, after } = require('node:test')
 
 const { makePlugin } = require('haraka-test-fixtures')
@@ -20,7 +19,7 @@ describe('config', () => {
 
   before(async () => {
     plugin = makePlugin('index', {
-      configDir: path.resolve('test'),
+      configDir: __dirname,
       register: false,
     })
   })
