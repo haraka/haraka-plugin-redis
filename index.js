@@ -92,18 +92,18 @@ exports.merge_redis_ini = function () {
 
 exports.init_redis_shared = async function (next, server) {
   // server-wide redis, shared by plugins that don't specify a db ID.
-  if (!server.notes.redis) {
+  if (server.notes.redis?.isOpen) {
     try {
-      server.notes.redis = await this.get_redis_client(this.redisCfg.server)
+      await server.notes.redis.ping()
+      this.loginfo('already connected')
+      return next()
     } catch (e) {
-      this.logerror(`Redis error: ${e.message}`)
+      this.logerror(`Redis ping failed, reconnecting: ${e.message}`)
     }
-    return next()
   }
 
   try {
-    await server.notes.redis.ping()
-    this.loginfo('already connected')
+    server.notes.redis = await this.get_redis_client(this.redisCfg.server)
   } catch (e) {
     this.logerror(`Redis error: ${e.message}`)
   }
@@ -123,7 +123,7 @@ exports.init_redis_plugin = async function (next, server) {
   if (!server) server = { notes: {} }
 
   const pidb = this.cfg.redis.database
-  if (server.notes.redis) {
+  if (server.notes.redis?.isOpen) {
     // server-wide redis is available
     // and the DB not specified or is the same as server-wide
     if (pidb === undefined || pidb === this.redisCfg.server.database) {
@@ -142,15 +142,12 @@ exports.init_redis_plugin = async function (next, server) {
 }
 
 exports.shutdown = function () {
-  if (this.db) this.db.quit()
-
-  if (
-    server &&
-    server.notes &&
-    server.notes.redis &&
-    server.notes.redis.isOpen
-  ) {
-    server.notes.redis.quit()
+  // Only quit a plugin-private connection. server.notes.redis must stay open
+  // until all per-connection hooks (hook_disconnect, etc.) have finished —
+  // calling quit() here races with those in-flight operations and causes
+  // "The client is closed" errors. The socket is released when the process exits.
+  if (this.db?.isOpen && this.db !== server?.notes?.redis) {
+    this.db.quit()
   }
 }
 
