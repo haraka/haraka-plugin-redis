@@ -4,6 +4,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.1.1] - 2026-06-18
+
+- fix: shutdown races with hook_disconnect causing "The client is closed"
+- fix: init_redis_shared reconnects when existing client is closed or ping fails
+- fix: init_redis_plugin checks isOpen before reusing server.notes.redis
 - dep(redis): upgrade to v6
 - test: refactored against test-fixtures 1.7.0
 
@@ -137,3 +142,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.0.10]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.10
 [2.0.11]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.11
 [2.1.0]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.1.0
+[2.1.1]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.1.1
