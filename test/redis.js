@@ -1,7 +1,9 @@
 'use strict'
 
 const assert = require('node:assert')
-const { describe, it, before, after } = require('node:test')
+const { execFile } = require('node:child_process')
+const path = require('node:path')
+const { describe, it, before, after, afterEach } = require('node:test')
 
 const { makePlugin } = require('haraka-test-fixtures')
 
@@ -438,5 +440,156 @@ describe('init_redis_shared re-entrant ping path', () => {
         resolve()
       }, server)
     })
+  })
+})
+
+// regression: shutdown() used to quit() the clients while Haraka was still
+// tearing down connections, so hook_disconnect handlers still using them (e.g.
+// karma's increment()) failed with "The client is closed". It now unref()s the
+// sockets instead: the clients stay usable, but no longer keep the process
+// alive once the connections are gone.
+describe('shutdown', () => {
+  let plugin
+
+  before(() => {
+    plugin = makePlugin('index', { register: false })
+    plugin.register()
+  })
+
+  // haraka-test-fixtures, like Haraka, aliases the plugin sandbox's `server`
+  // object (the one shutdown() reads) as global.server once the plugin code
+  // has required a module
+  afterEach(() => {
+    delete global.server.notes.redis
+  })
+
+  it('unrefs the open clients and skips the closed ones', () => {
+    const calls = []
+    plugin.db = { isOpen: true, unref: () => calls.push('db') }
+    global.server.notes.redis = {
+      isOpen: false,
+      unref: () => calls.push('shared'),
+    }
+    plugin.shutdown()
+    assert.deepEqual(calls, ['db'])
+
+    calls.length = 0
+    plugin.db = { isOpen: false, unref: () => calls.push('db') }
+    global.server.notes.redis = {
+      isOpen: true,
+      unref: () => calls.push('shared'),
+    }
+    plugin.shutdown()
+    assert.deepEqual(calls, ['shared'])
+  })
+
+  it('leaves the shared client open and usable', async () => {
+    const server = global.server
+    await new Promise((resolve) => plugin.init_redis_shared(resolve, server))
+    plugin.db = server.notes.redis
+    // once unref'd, the socket alone no longer keeps this process alive
+    // either (node 22's test runner holds nothing else), so hold it here
+    const keepalive = setTimeout(() => {}, 5000)
+    try {
+      plugin.shutdown()
+      assert.equal(server.notes.redis.isOpen, true)
+      assert.equal(await server.notes.redis.ping(), 'PONG')
+    } finally {
+      await server.notes.redis.quit()
+      clearTimeout(keepalive)
+    }
+  })
+
+  it('lets the process exit once nothing else keeps it alive', async () => {
+    // an unref'd socket is only observable through the process exiting on its
+    // own, hence the child. Left open, the client would keep it alive until
+    // the timeout kills it; quit(), and the ping would reject.
+    const script = `
+      const { makePlugin } = require('haraka-test-fixtures')
+      const plugin = makePlugin('index', { register: false })
+      plugin.register()
+      plugin.init_redis_shared(async () => {
+        plugin.shutdown()
+        process.exitCode = 3
+        const keepalive = setTimeout(() => {}, 5000)
+        const r = await global.server.notes.redis.ping()
+        clearTimeout(keepalive)
+        process.exitCode = r === 'PONG' ? 0 : 2
+        // no quit(): the unref'd socket must not hold the process
+      }, global.server)
+    `
+    const { err, stderr } = await new Promise((resolve) => {
+      execFile(
+        process.execPath,
+        ['-e', script],
+        { cwd: path.resolve(__dirname, '..'), timeout: 8000 },
+        (err, stdout, stderr) => resolve({ err, stderr }),
+      )
+    })
+    const why = err?.killed ? 'killed on timeout' : `exit code ${err?.code}`
+    assert.equal(err, null, `child did not exit cleanly (${why}): ${stderr}`)
+  })
+})
+
+// regression: init_redis_shared reused any existing server.notes.redis, even
+// one node-redis had closed for good (reconnectStrategy gave up, or quit()).
+describe('init_redis_shared with an existing client', () => {
+  let plugin
+  let server
+
+  before(() => {
+    plugin = makePlugin('index', { register: false })
+    plugin.register()
+    server = { notes: {} }
+  })
+
+  after(async () => {
+    if (server.notes.redis?.isOpen) await server.notes.redis.quit()
+  })
+
+  it('replaces a closed server.notes.redis', async () => {
+    await new Promise((resolve) => plugin.init_redis_shared(resolve, server))
+    const closed = server.notes.redis
+    await closed.quit()
+    assert.equal(closed.isOpen, false)
+
+    await new Promise((resolve) => plugin.init_redis_shared(resolve, server))
+    assert.notEqual(server.notes.redis, closed)
+    assert.equal(server.notes.redis.isOpen, true)
+  })
+
+  it('keeps an open client whose ping fails', async () => {
+    const real = server.notes.redis
+    const flaky = {
+      isOpen: true,
+      ping: async () => {
+        throw new Error('LOADING Redis is loading the dataset in memory')
+      },
+    }
+    server.notes.redis = flaky
+    try {
+      await new Promise((resolve) => plugin.init_redis_shared(resolve, server))
+      assert.equal(server.notes.redis, flaky)
+    } finally {
+      server.notes.redis = real
+    }
+  })
+})
+
+describe('init_redis_plugin with a closed shared client', () => {
+  it('connects its own client instead of reusing it', async () => {
+    const plugin = makePlugin('index', { register: false })
+    plugin.register()
+    plugin.merge_redis_ini()
+    const closed = { isOpen: false }
+    const server = { notes: { redis: closed }, loginfo: () => {} }
+
+    await new Promise((resolve) => plugin.init_redis_plugin(resolve, server))
+    try {
+      assert.notEqual(plugin.db, closed)
+      assert.equal(plugin.db.isOpen, true)
+    } finally {
+      await plugin.db.quit()
+    }
   })
 })

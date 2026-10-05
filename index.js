@@ -92,18 +92,22 @@ exports.merge_redis_ini = function () {
 
 exports.init_redis_shared = async function (next, server) {
   // server-wide redis, shared by plugins that don't specify a db ID.
-  if (!server.notes.redis) {
+  if (server.notes.redis?.isOpen) {
+    // an open client is still managed by node-redis (connected or
+    // reconnecting) and other plugins hold a reference to it, so a ping
+    // failure is only logged: a replacement client would not fare any better.
     try {
-      server.notes.redis = await this.get_redis_client(this.redisCfg.server)
+      await server.notes.redis.ping()
+      this.loginfo('already connected')
     } catch (e) {
       this.logerror(`Redis error: ${e.message}`)
     }
     return next()
   }
 
+  // no client yet, or a closed one (node-redis gave up reconnecting)
   try {
-    await server.notes.redis.ping()
-    this.loginfo('already connected')
+    server.notes.redis = await this.get_redis_client(this.redisCfg.server)
   } catch (e) {
     this.logerror(`Redis error: ${e.message}`)
   }
@@ -123,7 +127,7 @@ exports.init_redis_plugin = async function (next, server) {
   if (!server) server = { notes: {} }
 
   const pidb = this.cfg.redis.database
-  if (server.notes.redis) {
+  if (server.notes.redis?.isOpen) {
     // server-wide redis is available
     // and the DB not specified or is the same as server-wide
     if (pidb === undefined || pidb === this.redisCfg.server.database) {
@@ -142,15 +146,14 @@ exports.init_redis_plugin = async function (next, server) {
 }
 
 exports.shutdown = function () {
-  if (this.db) this.db.quit()
-
-  if (
-    server &&
-    server.notes &&
-    server.notes.redis &&
-    server.notes.redis.isOpen
-  ) {
-    server.notes.redis.quit()
+  // Haraka fires plugins.shutdown while connections are still being torn
+  // down, and their hooks (hook_disconnect, ...) keep using these clients.
+  // quit() would race those commands ("The client is closed"), and leaving
+  // the sockets open would keep the event loop alive until Haraka's
+  // force-kill timeout. unref() does neither: the clients stay usable while
+  // connections drain, and the process exits on its own once they are gone.
+  for (const client of [this.db, server?.notes?.redis]) {
+    if (client?.isOpen) client.unref()
   }
 }
 

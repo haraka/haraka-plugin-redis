@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 - dep(redis): upgrade to v6
 - test: refactored against test-fixtures 1.7.0
+- fix: shutdown unrefs the redis sockets instead of quitting the clients
+  - quit() raced hook_disconnect handlers still using them ("The client is closed")
+  - the clients stay usable while connections drain, and no longer keep the process alive
+- fix: init_redis_shared reconnects when server.notes.redis is closed
+- fix: init_redis_plugin checks isOpen before reusing server.notes.redis
 
 ### [2.1.0] - 2026-05-20
 
