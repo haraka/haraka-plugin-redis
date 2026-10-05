@@ -1,17 +1,17 @@
 {
   "name": "haraka-plugin-redis",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Redis plugin for Haraka & other plugins to inherit from",
   "main": "index.js",
   "files": [
     "config"
   ],
   "dependencies": {
-    "redis": "^6.0.0"
+    "redis": "^6.3.0"
   },
   "devDependencies": {
     "@haraka/eslint-config": "^3.0.0",
-    "haraka-test-fixtures": "^1.7.0"
+    "haraka-test-fixtures": "^1.7.2"
   },
   "scripts": {
     "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true",
