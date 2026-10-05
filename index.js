@@ -56,6 +56,11 @@ function normalize_redis_ini(raw = {}) {
     server: normalize_endpoint(raw.server, raw.opts),
     pubsub: normalize_endpoint(raw.pubsub, raw.opts),
   }
+  // [pubsub] connects where [server] does unless it names its own host or
+  // port. 2.0.x did this by accident, through a socket object they shared.
+  const named = { ...raw.opts, ...raw.pubsub }
+  if (!named.host && !named.ip) out.pubsub.socket.host = out.server.socket.host
+  if (!named.port) out.pubsub.socket.port = out.server.socket.port
   // legacy: top-level db → database. Keep both when both are set.
   if (raw.database !== undefined) out.database = raw.database
   else if (raw.db !== undefined) out.database = raw.db

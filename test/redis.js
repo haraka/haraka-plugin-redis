@@ -305,6 +305,49 @@ describe('normalize_redis_ini legacy compat', () => {
     assert.equal(cfg.server.socket.port, '6379')
   })
 
+  it('pubsub connects to the [server] host and port when it names neither', () => {
+    const cfg = normalize_redis_ini({
+      server: { host: '10.0.0.5', port: 6380, db: 3 },
+      pubsub: {},
+    })
+    assert.equal(cfg.pubsub.socket.host, '10.0.0.5')
+    assert.equal(cfg.pubsub.socket.port, 6380)
+    assert.equal(cfg.pubsub.db, undefined, 'pubsub is DB agnostic')
+  })
+
+  it('pubsub inherits only what it does not name', () => {
+    const cfg = normalize_redis_ini({
+      server: { host: '10.0.0.5', port: 6380 },
+      pubsub: { port: 6381 },
+    })
+    assert.equal(cfg.pubsub.socket.host, '10.0.0.5')
+    assert.equal(cfg.pubsub.socket.port, 6381)
+    assert.equal(
+      cfg.server.socket.port,
+      6380,
+      'and never writes back to [server]',
+    )
+  })
+
+  it('a host named in pubsub, [opts], or legacy ip is not overridden', () => {
+    const server = { host: '10.0.0.5' }
+    assert.equal(
+      normalize_redis_ini({ server, pubsub: { host: '10.0.0.6' } }).pubsub
+        .socket.host,
+      '10.0.0.6',
+    )
+    assert.equal(
+      normalize_redis_ini({ server, pubsub: { ip: '10.0.0.7' } }).pubsub.socket
+        .host,
+      '10.0.0.7',
+    )
+    assert.equal(
+      normalize_redis_ini({ server, opts: { host: '10.0.0.8' } }).pubsub.socket
+        .host,
+      '10.0.0.8',
+    )
+  })
+
   it('does not mutate its input', () => {
     const raw = { server: { ip: '10.0.0.5' }, pubsub: { host: '10.0.0.6' } }
     const snapshot = JSON.parse(JSON.stringify(raw))

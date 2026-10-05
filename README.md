@@ -22,7 +22,7 @@ The `redis.ini` file has the following sections (defaults shown):
 ; port=6379
 ```
 
-Publish & Subscribe are DB agnostic and thus have no db setting. If host and port and not defined, they default to the same as [socket] settings.
+Publish & Subscribe are DB agnostic and thus have no db setting. If host and port are not defined, they default to the [server] settings.
 
 ### [opts]
 

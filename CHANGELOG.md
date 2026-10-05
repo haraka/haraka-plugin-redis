@@ -4,8 +4,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
-- dep(redis): upgrade to v6
-- test: refactored against test-fixtures 1.7.0
+### [2.1.1] - 2026-10-05
+
+- fix: [pubsub] defaults to the [server] host and port
+- refactored against test-fixtures 1.7.0 (#55)
+- deps(redis): bump to v6 (#56)
 - fix: shutdown unrefs the redis sockets instead of quitting the clients
   - quit() raced hook_disconnect handlers still using them ("The client is closed")
   - the clients stay usable while connections drain, and no longer keep the process alive
@@ -142,3 +145,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.0.10]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.10
 [2.0.11]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.0.11
 [2.1.0]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.1.0
+[2.1.1]: https://github.com/haraka/haraka-plugin-redis/releases/tag/v2.1.1
